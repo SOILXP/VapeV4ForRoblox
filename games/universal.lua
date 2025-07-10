@@ -7488,43 +7488,6 @@ FPSUnlocker = vape.Categories.Utility:CreateModule({
     Tooltip = "Insanly Simple fps unlocker"
 })
 
-local BedTP
-BedTP = vape.Categories.Blatant:CreateModule({
-    Name = "BedTP",
-    Description = "Teleports to enemy beds",
-    Function = function(callback)
-        if callback then
-			BedTP:Toggle(false)
-			local collection = game:GetService('CollectionService') :: CollectionService;
-			local lplr = game.Players.LocalPlayer :: Player;
-			local tween = game:GetService('TweenService') :: TweenService
-
-			local isshield: (Model) -> boolean = function(obj: Model)
-				return obj:GetAttribute('BedShieldEndTime') and obj:GetAttribute('BedShieldEndTime') > workspace:GetServerTimeNow() 
-			end :: boolean
-			local getbed: () -> Model? = function()
-				for i: number, v: Model? in collection:GetTagged('bed') do
-					if not isshield(v) and v.Bed.BrickColor ~= lplr.TeamColor then
-						return v;
-					end;
-				end;
-			end :: Model?;
-			
-			local bed = getbed() :: Model?;
-			assert(bed, 'lmao');
-			pcall(function()
-				lplr.Character.Humanoid.Health = 0
-			end)
-			local con;
-			con = lplr.CharacterAdded:Connect(function(v)
-				con:Disconnect();
-				task.wait(0.2)
-				tween:Create(v.PrimaryPart, TweenInfo.new(0.75), {CFrame = bed.Bed.CFrame + Vector3.new(0, 6, 0)}):Play();
-			end);
-        end
-    end
-})
-
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -7603,15 +7566,6 @@ run(function()
         end
     })
 end)
-
-if vape and vape.CreateNotification then
-    vape:CreateNotification(
-        "VAPE PRIVATE",
-        "VAPE PRIVATE Loaded!",
-        8,
-        "warning"
-    )
-end
 
 run(function()
 	local highlightBallModule = {["Enabled"] = false}
@@ -7706,37 +7660,6 @@ run(function()
 			end)
 		end
 	})
-end)
-
-run(function()
-    local _p = game:GetService("Players")
-    local _lp = _p.LocalPlayer
-
-    local _spoof = {
-        ["\x6F"] = nil,
-        ["\x76"] = 554320
-    }
-
-    _spoof["\x6D"] = vape.Categories.World:CreateModule({
-        Name = "UnlockVK",
-        Tooltip = "get votekick free ig",
-        Function = function(_s)
-            local _d = _lp:FindFirstChild("\x44\x61\x74\x61")
-            local _l = (_d and _d:FindFirstChild("\x4C\x65\x76\x65\x6C"))
-
-            if not (_l and _l:IsA("\x49\x6E\x74\x56\x61\x6C\x75\x65")) then return end
-
-            if _s then
-                if _spoof["\x6F"] == nil then
-                    _spoof["\x6F"] = _l.Value
-                end
-                _l.Value = _spoof["\x76"]
-            elseif _spoof["\x6F"] ~= nil then
-                _l.Value = _spoof["\x6F"]
-                _spoof["\x6F"] = nil
-            end
-        end
-    })
 end)
 
 local Players = game:GetService("Players")
@@ -7864,15 +7787,6 @@ run(function()
 		end
 	})
 end)
-
-if vape and vape.CreateNotification then
-    vape:CreateNotification(
-        "VAPE PRIVATE",
-        "Unwhitelisted, Vape private exiting",
-        8,
-        "warning"
-    )
-end
 						
 run(function()
 	local RunService = game:GetService("RunService")
