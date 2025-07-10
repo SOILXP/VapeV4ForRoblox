@@ -60,7 +60,7 @@ local function tag(plr)
 	if isInList(id, whitelist.Owner) then
 		applyTag(plr, "Vape OWNER", Color3.fromRGB(210, 4, 45))
 	elseif isInList(id, whitelist.Private) then
-		applyTag(plr, "Vape Private", Color3.fromRGB(170, 0, 255))
+		applyTag(plr, "Anticheat Mod", Color3.fromRGB(170, 0, 255))
 	elseif isInList(id, whitelist.Slow) then
 		applyTag(plr, "Retard", Color3.fromRGB(70, 130, 255))
 	end
