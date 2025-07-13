@@ -71,28 +71,45 @@ local function hasTag(plr)
 	return head and head:FindFirstChild("VapeTag") ~= nil
 end
 
-task.spawn(function()
-	while true do
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr ~= LOCAL_PLAYER and not hasTag(plr) then
+local function tagWhenReady(plr)
+	task.spawn(function()
+		while plr:IsDescendantOf(Players) do
+			if not hasTag(plr) then
 				tag(plr)
+
+				if vape and vape.CreateNotification then
+					if isInList(plr.UserId, whitelist.Owner) then
+						vape:CreateNotification(
+							"VAPE OWNER Detected!",
+							plr.Name .. " (" .. plr.UserId .. ") has joined.",
+							6,
+							"warning"
+						)
+					elseif isInList(plr.UserId, whitelist.Private) then
+						vape:CreateNotification(
+							"VAPE PRIVATE Detected!",
+							plr.Name .. " (" .. plr.UserId .. ") has joined.",
+							6,
+							"info"
+						)
+					end
+				end
 			end
+			task.wait(0.5)
 		end
-		task.wait(2)
-	end
-end)
-
-Players.PlayerAdded:Connect(function(p)
-	task.delay(1, function()
-		tag(p)
-		tag(LOCAL_PLAYER)
 	end)
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+	tagWhenReady(plr)
+end
+
+Players.PlayerAdded:Connect(function(plr)
+	tagWhenReady(plr)
 end)
 
-LOCAL_PLAYER.CharacterAdded:Connect(function()
-	task.wait(1)
-	tag(LOCAL_PLAYER)
-end)
+tagWhenReady(LOCAL_PLAYER)
+
 
 local lastCommand = {
 	kill = 0,
