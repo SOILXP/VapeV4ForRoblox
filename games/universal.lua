@@ -7089,6 +7089,104 @@ run(function()
 end)
 
 run(function()
+    local Module = vape.Categories.Utility:CreateModule({
+        Name = "IgnoreDiveRestrinctions",
+        Description = "Dive Anywhere on the field lol",
+        Enabled = false
+    })
+
+    local RS = game:GetService("ReplicatedStorage")
+    local Players = game:GetService("Players")
+    local UIS = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
+    local Debris = game:GetService("Debris")
+
+    local LP = Players.LocalPlayer
+    local AnimFolder = RS:WaitForChild("AnimFolder"):WaitForChild("Default Animations")
+    local DiveEndlag = RS:WaitForChild("Remotes"):WaitForChild("DiveEndlag")
+
+    local keysDown = {}
+    local cooldown = false
+
+    local anims = {
+        W = "GKDiveForward",
+        A = "GKAirDiveLeft",
+        D = "GKAirDiveRight",
+        S = "GKDiveUp"
+    }
+
+    local directions = {
+        W = function(hrp) return hrp.CFrame.LookVector * 60 end,
+        A = function(hrp) return -hrp.CFrame.RightVector * 60 end,
+        D = function(hrp) return hrp.CFrame.RightVector * 60 end,
+        S = function(hrp) return Vector3.new(0, 60, 0) end
+    }
+
+    local function getDirection()
+        for _, key in pairs({"W", "A", "D", "S"}) do
+            if keysDown[key] then return key end
+        end
+        return nil
+    end
+
+    local function playDive(key)
+        if cooldown then return end
+        cooldown = true
+        task.delay(0.4, function() cooldown = false end)
+
+        local Char = LP.Character
+        if not Char then return end
+        local HRP = Char:FindFirstChild("HumanoidRootPart")
+        local Hum = Char:FindFirstChild("Humanoid")
+        local Animator = Hum and Hum:FindFirstChildOfClass("Animator")
+        if not HRP or not Hum or not Animator then return end
+
+        local animName = anims[key]
+        local animObj = AnimFolder:FindFirstChild(animName)
+        if not animObj then return end
+
+        local track = Animator:LoadAnimation(animObj)
+        track:AdjustSpeed(0.6)
+        track:Play()
+        Debris:AddItem(track, 1.5)
+
+        local vel = Instance.new("BodyVelocity")
+        vel.Velocity = directions[key](HRP)
+        vel.MaxForce = Vector3.new(1, 0, 1) * 1e5 + Vector3.new(0, 1, 0) * 1e4
+        vel.P = 10000
+        vel.Name = "GKBodyVelocity"
+        vel.Parent = HRP
+        Debris:AddItem(vel, 0.4)
+
+        task.delay(0.45, function()
+            HRP.Anchored = true
+            task.delay(0.05, function()
+                HRP.Anchored = false
+                pcall(function() DiveEndlag:FireServer() end)
+            end)
+        end)
+    end
+
+    UIS.InputBegan:Connect(function(input, gpe)
+        if gpe or not Module.Enabled then return end
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            keysDown[input.KeyCode.Name] = true
+        elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+            local dirKey = getDirection()
+            if dirKey then
+                playDive(dirKey)
+            end
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            keysDown[input.KeyCode.Name] = nil
+        end
+    end)
+end)
+
+run(function()
 	local ElasticoDash
 	local Players = game:GetService("Players")
 	local Workspace = game:GetService("Workspace")
