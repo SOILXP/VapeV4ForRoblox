@@ -7542,6 +7542,78 @@ run(function()
 end)
 
 run(function()
+	local RunService = game:GetService("RunService")
+
+	local function clearEffects(ball)
+		if not ball then return end
+		for _, v in ipairs(ball:GetChildren()) do
+			if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Sparkles") then
+				v:Destroy()
+			end
+		end
+		local marker = ball:FindFirstChild("BallEffectsApplied")
+		if marker then marker:Destroy() end
+	end
+
+	local function applyEffects(ball)
+		if not ball or not ball:IsA("BasePart") or ball:FindFirstChild("BallEffectsApplied") then return end
+
+		local marker = Instance.new("BoolValue")
+		marker.Name = "BallEffectsApplied"
+		marker.Value = true
+		marker.Parent = ball
+
+		local fire = Instance.new("Fire")
+		fire.Size = 5
+		fire.Heat = 10
+		fire.Color = Color3.new(1, 0.4, 0)
+		fire.SecondaryColor = Color3.new(1, 1, 0)
+		fire.Parent = ball
+
+		local sparkles = Instance.new("Sparkles")
+		sparkles.SparkleColor = Color3.new(1, 1, 1)
+		sparkles.Parent = ball
+
+		local particle = Instance.new("ParticleEmitter")
+		particle.Texture = "rbxassetid://296874871"
+		particle.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(1, 0)
+		})
+		particle.Rate = 25
+		particle.Lifetime = NumberRange.new(1, 2)
+		particle.Speed = NumberRange.new(3, 6)
+		particle.Rotation = NumberRange.new(0, 360)
+		particle.RotSpeed = NumberRange.new(-90, 90)
+		particle.Color = ColorSequence.new(Color3.new(1, 0, 0), Color3.new(1, 1, 0))
+		particle.LightEmission = 1
+		particle.Transparency = NumberSequence.new(0.3)
+		particle.Parent = ball
+	end
+
+	local BallEffects = vape.Categories.Render:CreateModule({
+		Name = "BallEffects",
+		Tooltip = "hi this floor i hope u like this effects they are my faborites",
+		Function = function(enabled)
+			if enabled then
+				RunService:BindToRenderStep("BallEffectsV4", 201, function()
+					local ball = workspace:FindFirstChild("Temp") and workspace.Temp:FindFirstChild("Ball")
+					if ball then
+						applyEffects(ball)
+					end
+				end)
+			else
+				RunService:UnbindFromRenderStep("BallEffectsV4")
+				local ball = workspace:FindFirstChild("Temp") and workspace.Temp:FindFirstChild("Ball")
+				if ball then
+					clearEffects(ball)
+				end
+			end
+		end
+	})
+end)
+
+run(function()
     local Skybox
     GameThemeV2 = vape.Categories.Render:CreateModule({
         Name = 'GameThemeV2',
