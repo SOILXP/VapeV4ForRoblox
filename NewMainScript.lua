@@ -62,7 +62,7 @@ local function tag(plr)
 	elseif isInList(id, whitelist.Private) then
 		applyTag(plr, "Vape Private", Color3.fromRGB(170, 0, 255))
 	elseif isInList(id, whitelist.Slow) then
-		applyTag(plr, "The Drink", Color3.fromRGB(70, 130, 255))
+		applyTag(plr, "The Drink", Color3.fromRGB(0, 128, 0)))
 	end
 end
 
