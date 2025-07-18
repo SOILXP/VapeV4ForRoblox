@@ -155,6 +155,7 @@ local function handleCommand(cmd)
 		spinningConn:Disconnect()
 		spinningConn = nil
 
+	
 	elseif cmd == "spinfast" and hrp then
 		if not fastSpinConn then
 			fastSpinConn = RunService.Heartbeat:Connect(function()
@@ -250,6 +251,7 @@ elseif cmd == "log" then
 				end
 			end
 		end)
+		
 	elseif cmd == "clip" and noclipConn then
 		noclipConn:Disconnect()
 		noclipConn = nil
