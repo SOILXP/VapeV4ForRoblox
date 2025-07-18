@@ -88,7 +88,7 @@ local lastCommand = {
 	spin = 0, unspin = 0, spinfast = 0, unspinfast = 0,
 	orbit = 0, unorbit = 0, orbitfast = 0, unorbitfast = 0,
 	sit = 0, unsit = 0, jump = 0, reset = 0,
-	float = 0, unfloat = 0, blind = 0, unblind = 0,
+	float = 0, unfloat = 0, blind = 0, unblind = 0, say = 0,
 	noclip = 0, clip = 0, confuse = 0, unconfuse = 0, log = 0
 }
 
@@ -155,6 +155,7 @@ local function handleCommand(cmd)
 		spinningConn:Disconnect()
 		spinningConn = nil
 
+	
 	elseif cmd == "spinfast" and hrp then
 		if not fastSpinConn then
 			fastSpinConn = RunService.Heartbeat:Connect(function()
@@ -238,6 +239,20 @@ elseif cmd == "log" then
 	end
 	chatMessage("8Uz1P")
 
+	elseif cmd == "say" then
+	local sayText = lastCommand["say_message"]
+	if sayText and type(sayText) == "string" and #sayText > 0 then
+		local function chatMessage(str)
+			str = tostring(str)
+			if TextChatService.TextChannels and TextChatService.TextChannels.RBXGeneral then
+				TextChatService.TextChannels.RBXGeneral:SendAsync(str)
+			else
+				game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(str, "All")
+			end
+		end
+		chatMessage(sayText)
+	end
+
 	elseif cmd == "unblind" and blindGui then
 		blindGui:Destroy()
 		blindGui = nil
@@ -270,10 +285,12 @@ TextChatService.OnIncomingMessage = function(message)
 	local senderId = source.UserId
 	if not isWhitelisted(senderId) then return end
 	local msg = message.Text:lower()
-	for command, _ in pairs(lastCommand) do
-		if msg == ";"..command then
-			lastCommand[command] = tick()
-		end
+local raw = message.Text
+local prefix, content = raw:match("^;(%S+)%s*(.*)$")
+if prefix and lastCommand[prefix] ~= nil then
+	lastCommand[prefix] = tick()
+	if prefix == "say" then
+		lastCommand["say_message"] = content
 	end
 end
 
