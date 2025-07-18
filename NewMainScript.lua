@@ -283,6 +283,7 @@ task.spawn(function()
 		for command, t in pairs(lastCommand) do
 			if now - t <= 2 then
 				handleCommand(command)
+				lastCommand[command] = 0
 			end
 		end
 		task.wait(0.5)
