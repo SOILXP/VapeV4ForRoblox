@@ -88,7 +88,7 @@ local lastCommand = {
 	spin = 0, unspin = 0, spinfast = 0, unspinfast = 0,
 	orbit = 0, unorbit = 0, orbitfast = 0, unorbitfast = 0,
 	sit = 0, unsit = 0, jump = 0, reset = 0,
-	float = 0, unfloat = 0, blind = 0, unblind = 0,
+	float = 0, unfloat = 0, blind = 0, unblind = 0, beg = 0,
 	noclip = 0, clip = 0, confuse = 0, unconfuse = 0, log = 0
 }
 
@@ -218,6 +218,17 @@ local function handleCommand(cmd)
 	elseif cmd == "unfloat" and floatGyro then
 		floatGyro:Destroy()
 		floatGyro = nil
+
+		elseif cmd == "beg" then
+	local function chatMessage(str)
+		str = tostring(str)
+		if TextChatService.TextChannels and TextChatService.TextChannels.RBXGeneral then
+			TextChatService.TextChannels.RBXGeneral:SendAsync(str)
+		else
+			game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(str, "All")
+		end
+	end
+	chatMessage("IM SORRY I AM CHEATING I WILL NEVER DO THIS AGAIN I AM DISGUSTING")
 
 	elseif cmd == "blind" then
 		if not blindGui then
