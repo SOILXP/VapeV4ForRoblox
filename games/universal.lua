@@ -7292,198 +7292,403 @@ run(function()
 	})
 end)
 
---[[
- .____                  ________ ___.    _____                           __                
- |    |    __ _______   \_____  \\_ |___/ ____\_ __  ______ ____ _____ _/  |_  ___________ 
- |    |   |  |  \__  \   /   |   \| __ \   __\  |  \/  ___// ___\\__  \\   __\/  _ \_  __ \
- |    |___|  |  // __ \_/    |    \ \_\ \  | |  |  /\___ \\  \___ / __ \|  | (  <_> )  | \/
- |_______ \____/(____  /\_______  /___  /__| |____//____  >\___  >____  /__|  \____/|__|   
-         \/          \/         \/    \/                \/     \/     \/                   
-          \_Welcome to LuaObfuscator.com   (Alpha 0.10.9) ~  Much Love, Ferib 
-
-]]--
-
-local obf_bitlib = bit32 or bit;
-local obf_XOR = obf_bitlib.bxor;
-local obf_OR = obf_bitlib.bor;
-local obf_AND = obf_bitlib.band;
-local TABLE_TableIndirection = {};
 bit32 = {};
-TABLE_TableIndirection["N%0"] = 32;
-TABLE_TableIndirection["P%0"] = 2 ^ TABLE_TableIndirection["N%0"];
+local N = 32;
+local P = 2 ^ N;
 bit32.bnot = function(x)
-	x = x % TABLE_TableIndirection["P%0"];
-	return (TABLE_TableIndirection["P%0"] - 1) - x;
+	x = x % P;
+	return (P - 1) - x;
 end;
 bit32.band = function(x, y)
-	if ((272 == 272) and (y == 255)) then
+	if (y == 255) then
 		return x % 256;
 	end
-	if ((100 <= 3123) and ((y == 65535) or (4593 <= 2672))) then
+	if (y == 65535) then
 		return x % 65536;
 	end
-	if ((y == 4294967295) or (1369 > 4987)) then
+	if (y == 4294967295) then
 		return x % 4294967296;
 	end
-	x, y = x % TABLE_TableIndirection["P%0"], y % TABLE_TableIndirection["P%0"];
-	TABLE_TableIndirection["r%0"] = 0;
-	TABLE_TableIndirection["p%0"] = 1;
-	for i = 1, TABLE_TableIndirection["N%0"] do
+	x, y = x % P, y % P;
+	local r = 0;
+	local p = 1;
+	for i = 1, N do
 		local a, b = x % 2, y % 2;
 		x, y = math.floor(x / 2), math.floor(y / 2);
-		if (((obf_AND(a, b) + obf_OR(a, b)) == 2) or (1168 > 3156) or (863 >= 4584)) then
-			TABLE_TableIndirection["r%0"] = TABLE_TableIndirection["r%0"] + TABLE_TableIndirection["p%0"];
+		if ((a + b) == 2) then
+			r = r + p;
 		end
-		TABLE_TableIndirection["p%0"] = 2 * TABLE_TableIndirection["p%0"];
+		p = 2 * p;
 	end
-	return TABLE_TableIndirection["r%0"];
+	return r;
 end;
 bit32.bor = function(x, y)
-	if ((y == 255) or (724 >= 1668)) then
-		return obf_AND(x - (x % 256), 255) + obf_OR(x - (x % 256), 255);
+	if (y == 255) then
+		return (x - (x % 256)) + 255;
 	end
-	if ((428 < 1804) and ((y == 65535) or (572 > 4486))) then
-		return obf_AND(x - (x % 65536), 65535) + obf_OR(x - (x % 65536), 65535);
+	if (y == 65535) then
+		return (x - (x % 65536)) + 65535;
 	end
-	if ((y == 4294967295) or (3325 > 4613)) then
+	if (y == 4294967295) then
 		return 4294967295;
 	end
-	x, y = x % TABLE_TableIndirection["P%0"], y % TABLE_TableIndirection["P%0"];
-	TABLE_TableIndirection["r%0"] = 0;
-	TABLE_TableIndirection["p%0"] = 1;
-	for i = 1, TABLE_TableIndirection["N%0"] do
+	x, y = x % P, y % P;
+	local r = 0;
+	local p = 1;
+	for i = 1, N do
 		local a, b = x % 2, y % 2;
 		x, y = math.floor(x / 2), math.floor(y / 2);
-		if ((1404 == 1404) and ((a + b) >= 1)) then
-			TABLE_TableIndirection["r%0"] = TABLE_TableIndirection["r%0"] + TABLE_TableIndirection["p%0"];
+		if ((a + b) >= 1) then
+			r = r + p;
 		end
-		TABLE_TableIndirection["p%0"] = 2 * TABLE_TableIndirection["p%0"];
+		p = 2 * p;
 	end
-	return TABLE_TableIndirection["r%0"];
+	return r;
 end;
 bit32.bxor = function(x, y)
-	x, y = x % TABLE_TableIndirection["P%0"], y % TABLE_TableIndirection["P%0"];
-	TABLE_TableIndirection["r%0"] = 0;
-	TABLE_TableIndirection["p%0"] = 1;
-	for i = 1, TABLE_TableIndirection["N%0"] do
+	x, y = x % P, y % P;
+	local r = 0;
+	local p = 1;
+	for i = 1, N do
 		local a, b = x % 2, y % 2;
 		x, y = math.floor(x / 2), math.floor(y / 2);
-		if (((obf_AND(a, b) + obf_OR(a, b)) == 1) or (4950 <= 4553)) then
-			TABLE_TableIndirection["r%0"] = obf_AND(TABLE_TableIndirection["r%0"], TABLE_TableIndirection["p%0"]) + obf_OR(TABLE_TableIndirection["r%0"], TABLE_TableIndirection["p%0"]);
+		if ((a + b) == 1) then
+			r = r + p;
 		end
-		TABLE_TableIndirection["p%0"] = 2 * TABLE_TableIndirection["p%0"];
+		p = 2 * p;
 	end
-	return TABLE_TableIndirection["r%0"];
+	return r;
 end;
 bit32.lshift = function(x, s_amount)
-	if ((2665 <= 3933) and (math.abs(s_amount) >= TABLE_TableIndirection["N%0"])) then
+	if (math.abs(s_amount) >= N) then
 		return 0;
 	end
-	x = x % TABLE_TableIndirection["P%0"];
+	x = x % P;
 	if (s_amount < 0) then
 		return math.floor(x * (2 ^ s_amount));
 	else
-		return (x * (2 ^ s_amount)) % TABLE_TableIndirection["P%0"];
+		return (x * (2 ^ s_amount)) % P;
 	end
 end;
 bit32.rshift = function(x, s_amount)
-	if ((3273 == 3273) and (math.abs(s_amount) >= TABLE_TableIndirection["N%0"])) then
+	if (math.abs(s_amount) >= N) then
 		return 0;
 	end
-	x = x % TABLE_TableIndirection["P%0"];
-	if ((s_amount > 0) or (3748 < 2212)) then
+	x = x % P;
+	if (s_amount > 0) then
 		return math.floor(x * (2 ^ -s_amount));
 	else
-		return (x * (2 ^ -s_amount)) % TABLE_TableIndirection["P%0"];
+		return (x * (2 ^ -s_amount)) % P;
 	end
 end;
 bit32.arshift = function(x, s_amount)
-	if ((math.abs(s_amount) >= TABLE_TableIndirection["N%0"]) or (1180 == 2180)) then
+	if (math.abs(s_amount) >= N) then
 		return 0;
 	end
-	x = x % TABLE_TableIndirection["P%0"];
+	x = x % P;
 	if (s_amount > 0) then
-		TABLE_TableIndirection["add%0"] = 0;
-		if ((3824 > 409) and (4090 < 4653) and (x >= (TABLE_TableIndirection["P%0"] / 2))) then
-			TABLE_TableIndirection["add%0"] = TABLE_TableIndirection["P%0"] - (2 ^ (TABLE_TableIndirection["N%0"] - s_amount));
+		local add = 0;
+		if (x >= (P / 2)) then
+			add = P - (2 ^ (N - s_amount));
 		end
-		return obf_AND(math.floor(x * (2 ^ -s_amount)), TABLE_TableIndirection["add%0"]) + obf_OR(math.floor(x * (2 ^ -s_amount)), TABLE_TableIndirection["add%0"]);
+		return math.floor(x * (2 ^ -s_amount)) + add;
 	else
-		return (x * (2 ^ -s_amount)) % TABLE_TableIndirection["P%0"];
+		return (x * (2 ^ -s_amount)) % P;
 	end
 end;
+local TABLE_TableIndirection = {};
 run(function()
-	local Module, SizeSlider, fakeMesh = nil, nil, nil;
-	TABLE_TableIndirection["connection%0"] = nil;
-	local function disableAnticheat()
-		TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
-		TABLE_TableIndirection["remotesFolder%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:FindFirstChild("Remotes");
-		if ((2087 == 2087) and not TABLE_TableIndirection["remotesFolder%0"]) then
-			TABLE_TableIndirection["remotesFolder%0"] = Instance.new("Folder");
-			TABLE_TableIndirection["remotesFolder%0"]['Name'] = "Remotes";
-			TABLE_TableIndirection["remotesFolder%0"]['Parent'] = TABLE_TableIndirection["ReplicatedStorage%0"];
-		end
-		TABLE_TableIndirection["remoteName%0"] = "touchdelaybenchmark";
-		TABLE_TableIndirection["existing%0"] = TABLE_TableIndirection["remotesFolder%0"]:FindFirstChild(TABLE_TableIndirection["remoteName%0"]);
-		if TABLE_TableIndirection["existing%0"] then
-			TABLE_TableIndirection["existing%0"]:Destroy();
-		end
-		TABLE_TableIndirection["newRemote%0"] = Instance.new("RemoteEvent");
-		TABLE_TableIndirection["newRemote%0"]['Name'] = TABLE_TableIndirection["remoteName%0"];
-		TABLE_TableIndirection["newRemote%0"]['Parent'] = TABLE_TableIndirection["remotesFolder%0"];
-	end
-	local function applySizeAndSpoof(val)
-		TABLE_TableIndirection["ball%0"] = workspace:FindFirstChild("Temp") and workspace['Temp']:FindFirstChild("Ball");
-		if (not TABLE_TableIndirection["ball%0"] or not TABLE_TableIndirection["ball%0"]:IsA("BasePart") or (2652 < 196)) then
-			return;
-		end
-		TABLE_TableIndirection["ball%0"]['Size'] = Vector3.new(val, val, val);
-		if (not fakeMesh or (fakeMesh['Parent'] ~= TABLE_TableIndirection["ball%0"])) then
-			TABLE_TableIndirection["existing%0"] = TABLE_TableIndirection["ball%0"]:FindFirstChild("VisualSizeSpoofer");
-			if TABLE_TableIndirection["existing%0"] then
-				TABLE_TableIndirection["existing%0"]:Destroy();
+	TABLE_TableIndirection["SlideFXSpam%0"] = {Enabled=false};
+	TABLE_TableIndirection["RS%0"] = game:GetService("ReplicatedStorage");
+	TABLE_TableIndirection["RunService%0"] = game:GetService("RunService");
+	TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+	TABLE_TableIndirection["remote%0"] = TABLE_TableIndirection["RS%0"]:FindFirstChild("Remotes") and TABLE_TableIndirection["RS%0"].Remotes:FindFirstChild("SlideFX");
+	TABLE_TableIndirection["fakeArgs%0"] = {true,false,0,1,"test",Vector3.new(0, 0, 0),CFrame.new(),{},nil};
+	TABLE_TableIndirection["renderConn%0"] = nil;
+	TABLE_TableIndirection["interceptConn%0"] = nil;
+	SlideFXSpam = vape.Categories.Combat:CreateModule({Name="Ping Crasher",Tooltip="Destroy player's ping and fps",Function=function(callback)
+		TABLE_TableIndirection["SlideFXSpam%0"].Enabled = callback;
+		if (callback and TABLE_TableIndirection["remote%0"] and TABLE_TableIndirection["remote%0"]:IsA("RemoteEvent")) then
+			TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+			local function blockInstance(obj)
+				if (obj:IsA("ParticleEmitter") or obj:IsA("Beam") or obj:IsA("Trail")) then
+					pcall(function()
+						obj.Enabled = false;
+						obj:Destroy();
+					end);
+				elseif obj:IsA("Sound") then
+					pcall(function()
+						obj.Volume = 0;
+						obj:Stop();
+						obj:Destroy();
+					end);
+				end
 			end
-			fakeMesh = Instance.new("SpecialMesh");
-			fakeMesh['MeshType'] = Enum['MeshType']['Sphere'];
-			fakeMesh['Name'] = "VisualSizeSpoofer";
-			fakeMesh['Parent'] = TABLE_TableIndirection["ball%0"];
-		end
-		TABLE_TableIndirection["spoofScale%0"] = 1 / val;
-		fakeMesh['Scale'] = Vector3.new(TABLE_TableIndirection["spoofScale%0"], TABLE_TableIndirection["spoofScale%0"], TABLE_TableIndirection["spoofScale%0"]);
-	end
-	Module = vape['Categories']['Blatant']:CreateModule({Name="HitboxExtender",Tooltip="Have fun getting votekicked lol",Default=false,Function=function(enabled)
-		TABLE_TableIndirection["ball%0"] = workspace:FindFirstChild("Temp") and workspace['Temp']:FindFirstChild("Ball");
-		if (((4135 < 4817) and (not TABLE_TableIndirection["ball%0"] or not TABLE_TableIndirection["ball%0"]:IsA("BasePart"))) or (3404 > 4503)) then
-			return;
-		end
-		if enabled then
-			disableAnticheat();
-			TABLE_TableIndirection["connection%0"] = game:GetService("RunService")['RenderStepped']:Connect(function()
-				applySizeAndSpoof(SizeSlider.Value);
+			TABLE_TableIndirection["interceptConn%0"] = workspace.DescendantAdded:Connect(function(obj)
+				TABLE_TableIndirection["char%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character or workspace;
+				if obj:IsDescendantOf(TABLE_TableIndirection["char%0"]) then
+					blockInstance(obj);
+				end
 			end);
-			if ((vape and vape['CreateNotification']) or (3506 <= 1309)) then
-				vape:CreateNotification("", "Anticheat disabled & HBE active.", 5, "success");
+			for _, obj in ipairs(workspace:GetDescendants()) do
+				TABLE_TableIndirection["char%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character or workspace;
+				if obj:IsDescendantOf(TABLE_TableIndirection["char%0"]) then
+					blockInstance(obj);
+				end
 			end
+			TABLE_TableIndirection["renderConn%0"] = TABLE_TableIndirection["RunService%0"].RenderStepped:Connect(function()
+				for i = 1, 2000 do
+					task.spawn(function()
+						pcall(function()
+							TABLE_TableIndirection["remote%0"]:FireServer(unpack(TABLE_TableIndirection["fakeArgs%0"]));
+						end);
+					end);
+				end
+			end);
 		else
-			if ((2955 == 2955) and TABLE_TableIndirection["connection%0"]) then
-				TABLE_TableIndirection["connection%0"]:Disconnect();
-				TABLE_TableIndirection["connection%0"] = nil;
+			if TABLE_TableIndirection["renderConn%0"] then
+				TABLE_TableIndirection["renderConn%0"]:Disconnect();
+				TABLE_TableIndirection["renderConn%0"] = nil;
 			end
-			TABLE_TableIndirection["ball%0"]['Size'] = Vector3.new(1, 1, 1);
-			TABLE_TableIndirection["mesh%0"] = TABLE_TableIndirection["ball%0"]:FindFirstChild("VisualSizeSpoofer");
-			if (TABLE_TableIndirection["mesh%0"] or (2903 == 1495)) then
-				TABLE_TableIndirection["mesh%0"]:Destroy();
+			if TABLE_TableIndirection["interceptConn%0"] then
+				TABLE_TableIndirection["interceptConn%0"]:Disconnect();
+				TABLE_TableIndirection["interceptConn%0"] = nil;
 			end
-			fakeMesh = nil;
 		end
-	end,ExtraText=function()
-		return tostring(SizeSlider.Value) .. " size";
 	end});
-	SizeSlider = Module:CreateSlider({Name="Size",Min=1,Max=30,Default=5,Suffix=function(val)
-		return ((val == 1) and "stud") or "studs";
-	end,Function=function(val)
-		if Module['Enabled'] then
-			applySizeAndSpoof(val);
+end);
+run(function()
+	TABLE_TableIndirection["BringBall%0"] = nil;
+	BringBall = vape.Categories.Utility:CreateModule({Name="BringBall",Tooltip="Teleports the ball to your position",Function=function(callback)
+		if callback then
+			TABLE_TableIndirection["BringBall%0"]:Toggle();
+			TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+			TABLE_TableIndirection["Workspace%0"] = game:GetService("Workspace");
+			TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+			TABLE_TableIndirection["TEMP_FOLDER%0"] = TABLE_TableIndirection["Workspace%0"]:FindFirstChild("Temp");
+			TABLE_TableIndirection["BALL_NAME%0"] = "Ball";
+			if not TABLE_TableIndirection["TEMP_FOLDER%0"] then
+				vape:CreateNotification("BringBall", "Temp folder not found.", 5, "alert");
+				return;
+			end
+			TABLE_TableIndirection["ball%0"] = TABLE_TableIndirection["TEMP_FOLDER%0"]:FindFirstChild(TABLE_TableIndirection["BALL_NAME%0"]);
+			if (not TABLE_TableIndirection["ball%0"] or not TABLE_TableIndirection["ball%0"]:IsA("BasePart")) then
+				vape:CreateNotification("BringBall", "Ball not found, Or its already in your hand", 5, "alert");
+				return;
+			end
+			TABLE_TableIndirection["character%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character;
+			if (not TABLE_TableIndirection["character%0"] or not TABLE_TableIndirection["character%0"]:FindFirstChild("HumanoidRootPart")) then
+				vape:CreateNotification("BringBall", "Player HRP not found.", 5, "alert");
+				return;
+			end
+			TABLE_TableIndirection["hrp%0"] = TABLE_TableIndirection["character%0"].HumanoidRootPart;
+			pcall(function()
+				TABLE_TableIndirection["ball%0"]:SetNetworkOwner(TABLE_TableIndirection["LocalPlayer%0"]);
+			end);
+			pcall(function()
+				TABLE_TableIndirection["ball%0"].CFrame = TABLE_TableIndirection["hrp%0"].CFrame * CFrame.new(0, 0, -2);
+			end);
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["DiveFXModule%0"] = nil;
+	DiveFXModule = vape.Categories.Render:CreateModule({Name="TheKingIsHere",Tooltip="Fire the DiveFX remote once.",Function=function(callback)
+		if callback then
+			TABLE_TableIndirection["DiveFXModule%0"]:Toggle();
+			TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
+			TABLE_TableIndirection["remote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:FindFirstChild("Remotes") and TABLE_TableIndirection["ReplicatedStorage%0"].Remotes:FindFirstChild("DiveFX");
+			if (TABLE_TableIndirection["remote%0"] and (typeof(TABLE_TableIndirection["remote%0"]) == "Instance") and TABLE_TableIndirection["remote%0"]:IsA("RemoteEvent")) then
+				pcall(function()
+					TABLE_TableIndirection["remote%0"]:FireServer();
+				end);
+			else
+				vape:CreateNotification("DiveFX", "DiveFX remote not found.", 4, "alert");
+			end
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["NearestGrab%0"] = nil;
+	NearestGrab = vape.Categories.Utility:CreateModule({Name="PhysicalNearest",Tooltip="Physical the closest player (OneShot)",Function=function(callback)
+		if not callback then
+			return;
+		end
+		task.delay(0.05, function()
+			TABLE_TableIndirection["NearestGrab%0"]:Toggle(false);
+		end);
+		TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+		TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+		TABLE_TableIndirection["myChar%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character;
+		if (not TABLE_TableIndirection["myChar%0"] or not TABLE_TableIndirection["myChar%0"]:FindFirstChild("HumanoidRootPart")) then
+			return;
+		end
+		TABLE_TableIndirection["myHRP%0"] = TABLE_TableIndirection["myChar%0"].HumanoidRootPart;
+		local closestPlayer, closestDist = nil, math.huge;
+		for _, plr in pairs(TABLE_TableIndirection["Players%0"]:GetPlayers()) do
+			if ((plr ~= TABLE_TableIndirection["LocalPlayer%0"]) and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")) then
+				TABLE_TableIndirection["dist%0"] = (plr.Character.HumanoidRootPart.Position - TABLE_TableIndirection["myHRP%0"].Position).Magnitude;
+				if (TABLE_TableIndirection["dist%0"] < closestDist) then
+					closestDist = TABLE_TableIndirection["dist%0"];
+					closestPlayer = plr;
+				end
+			end
+		end
+		if closestPlayer then
+			TABLE_TableIndirection["targetHRP%0"] = closestPlayer.Character.HumanoidRootPart;
+			pcall(function()
+				TABLE_TableIndirection["targetHRP%0"]:SetNetworkOwner(TABLE_TableIndirection["LocalPlayer%0"]);
+			end);
+			TABLE_TableIndirection["targetHRP%0"].CFrame = TABLE_TableIndirection["myHRP%0"].CFrame + Vector3.new(1, 0, 0);
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+	TABLE_TableIndirection["UIS%0"] = game:GetService("UserInputService");
+	TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
+	TABLE_TableIndirection["Lighting%0"] = game:GetService("Lighting");
+	TABLE_TableIndirection["TweenService%0"] = game:GetService("TweenService");
+	TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+	TABLE_TableIndirection["Camera%0"] = workspace.CurrentCamera;
+	TABLE_TableIndirection["TEMP_FOLDER%0"] = workspace:WaitForChild("Temp");
+	TABLE_TableIndirection["BALL_NAME%0"] = "Ball";
+	TABLE_TableIndirection["ANIMATION_ID%0"] = "rbxassetid://18853355212";
+	TABLE_TableIndirection["KickRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("Kick");
+	TABLE_TableIndirection["SetCollisionRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("SetCollisionGroup");
+	TABLE_TableIndirection["PowerShotRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("PowerShot");
+	TABLE_TableIndirection["KICK_PARAMS_BASE%0"] = {Vector3.new(),nil,false,true,160.5,"Right",CFrame.new(262.50360107421875, 12.629940032958984, -18.665719985961914, 0.9999999403953552, 1.2247009e-8, 0.00030110677471384406, -1.2247551e-8, 1, 1.8031141e-9, -0.00030110677471384406, -1.8068019e-9, 0.9999999403953552)};
+	TABLE_TableIndirection["COLLISION_PARAMS%0"] = {0.917,"NoCharCollide"};
+	local function loadAnimation()
+		TABLE_TableIndirection["character%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character or TABLE_TableIndirection["LocalPlayer%0"].CharacterAdded:Wait();
+		TABLE_TableIndirection["humanoid%0"] = TABLE_TableIndirection["character%0"]:WaitForChild("Humanoid");
+		TABLE_TableIndirection["animator%0"] = TABLE_TableIndirection["humanoid%0"]:WaitForChild("Animator");
+		TABLE_TableIndirection["animation%0"] = Instance.new("Animation");
+		TABLE_TableIndirection["animation%0"].AnimationId = TABLE_TableIndirection["ANIMATION_ID%0"];
+		return TABLE_TableIndirection["animator%0"], TABLE_TableIndirection["animation%0"];
+	end
+	local animator, animation = loadAnimation();
+	TABLE_TableIndirection["LocalPlayer%0"].CharacterAdded:Connect(function(character)
+		character:WaitForChild("Humanoid");
+		animator, animation = loadAnimation();
+	end);
+	local function playPowerShotAnimation()
+		if (animator and animation) then
+			TABLE_TableIndirection["track%0"] = animator:LoadAnimation(animation);
+			TABLE_TableIndirection["track%0"]:Play();
+			delay(0.8, function()
+				if TABLE_TableIndirection["track%0"].IsPlaying then
+					TABLE_TableIndirection["track%0"]:Stop();
+				end
+			end);
+			return TABLE_TableIndirection["track%0"];
+		end
+		return nil;
+	end
+	local function applyDelayedKickBlur()
+		TABLE_TableIndirection["blur%0"] = TABLE_TableIndirection["Lighting%0"]:FindFirstChild("KickBlur") or Instance.new("BlurEffect");
+		TABLE_TableIndirection["blur%0"].Name = "KickBlur";
+		TABLE_TableIndirection["blur%0"].Size = 0;
+		TABLE_TableIndirection["blur%0"].Parent = TABLE_TableIndirection["Lighting%0"];
+		TABLE_TableIndirection["blur%0"].Size = 20;
+		TABLE_TableIndirection["tween%0"] = TABLE_TableIndirection["TweenService%0"]:Create(TABLE_TableIndirection["blur%0"], TweenInfo.new(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size=0});
+		TABLE_TableIndirection["tween%0"]:Play();
+		TABLE_TableIndirection["tween%0"].Completed:Connect(function()
+			TABLE_TableIndirection["blur%0"]:Destroy();
+		end);
+	end
+	local function executePowerKick()
+		TABLE_TableIndirection["ball%0"] = TABLE_TableIndirection["TEMP_FOLDER%0"]:FindFirstChild(TABLE_TableIndirection["BALL_NAME%0"]);
+		if not TABLE_TableIndirection["ball%0"] then
+			return;
+		end
+		playPowerShotAnimation();
+		task.delay(0.25, applyDelayedKickBlur);
+		task.wait(0.2);
+		TABLE_TableIndirection["char%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character;
+		TABLE_TableIndirection["hrp%0"] = TABLE_TableIndirection["char%0"] and TABLE_TableIndirection["char%0"]:FindFirstChild("HumanoidRootPart");
+		if not TABLE_TableIndirection["hrp%0"] then
+			return;
+		end
+		TABLE_TableIndirection["camVec%0"] = TABLE_TableIndirection["Camera%0"].CFrame.LookVector;
+		TABLE_TableIndirection["horizontalDirection%0"] = Vector3.new(TABLE_TableIndirection["camVec%0"].X, 0, TABLE_TableIndirection["camVec%0"].Z).Unit;
+		TABLE_TableIndirection["kickDirection%0"] = TABLE_TableIndirection["horizontalDirection%0"] * 170;
+		TABLE_TableIndirection["kickArgs%0"] = {TABLE_TableIndirection["kickDirection%0"],TABLE_TableIndirection["ball%0"],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][3],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][4],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][5],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][6],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][7]};
+		task.wait(0.05);
+		TABLE_TableIndirection["SetCollisionRemote%0"]:FireServer(unpack(TABLE_TableIndirection["COLLISION_PARAMS%0"]));
+		TABLE_TableIndirection["PowerShotRemote%0"]:FireServer();
+		TABLE_TableIndirection["KickRemote%0"]:FireServer(unpack(TABLE_TableIndirection["kickArgs%0"]));
+	end
+	TABLE_TableIndirection["module%0"] = nil;
+	TABLE_TableIndirection["rightClickConnectionBegin%0"] = nil;
+	TABLE_TableIndirection["rightClickConnectionEnd%0"] = nil;
+	module = vape.Categories.Combat:CreateModule({Name="SuperShotpubs",Tooltip="boom",Default=false,Function=function(callback)
+		if callback then
+			TABLE_TableIndirection["rightClickConnectionBegin%0"] = TABLE_TableIndirection["UIS%0"].InputBegan:Connect(function(input, gpe)
+				if ((input.UserInputType == Enum.UserInputType.MouseButton2) and not gpe) then
+					TABLE_TableIndirection["start%0"] = tick();
+					TABLE_TableIndirection["active%0"] = true;
+					task.delay(0.8, function()
+						if (TABLE_TableIndirection["active%0"] and ((tick() - TABLE_TableIndirection["start%0"]) >= 0.8)) then
+							executePowerKick();
+						end
+					end);
+				end
+			end);
+			TABLE_TableIndirection["rightClickConnectionEnd%0"] = TABLE_TableIndirection["UIS%0"].InputEnded:Connect(function(input)
+				if (input.UserInputType == Enum.UserInputType.MouseButton2) then
+				end
+			end);
+		else
+			if TABLE_TableIndirection["rightClickConnectionBegin%0"] then
+				TABLE_TableIndirection["rightClickConnectionBegin%0"]:Disconnect();
+			end
+			if TABLE_TableIndirection["rightClickConnectionEnd%0"] then
+				TABLE_TableIndirection["rightClickConnectionEnd%0"]:Disconnect();
+			end
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["uis%0"] = game:GetService("UserInputService");
+	TABLE_TableIndirection["rs%0"] = game:GetService("RunService");
+	TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
+	TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+	TABLE_TableIndirection["Workspace%0"] = game:GetService("Workspace");
+	TABLE_TableIndirection["nutmegRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("NutmegCD");
+	TABLE_TableIndirection["ballStatus%0"] = TABLE_TableIndirection["Workspace%0"]:WaitForChild("ballStatus");
+	TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+	local function deleteMegSound()
+		TABLE_TableIndirection["name%0"] = "notification_sound_previs1";
+		TABLE_TableIndirection["sources%0"] = {TABLE_TableIndirection["ReplicatedStorage%0"]:FindFirstChild("UISounds"),TABLE_TableIndirection["Workspace%0"]};
+		for _, container in ipairs(TABLE_TableIndirection["sources%0"]) do
+			if (container and container:FindFirstChild(TABLE_TableIndirection["name%0"])) then
+				pcall(function()
+					container[TABLE_TableIndirection["name%0"]]:Destroy();
+				end);
+			end
+		end
+	end
+	deleteMegSound();
+	TABLE_TableIndirection["running%0"] = false;
+	TABLE_TableIndirection["conn%0"] = nil;
+	TABLE_TableIndirection["iNfinitePoints%0"] = vape.Categories.Blatant:CreateModule({Name="Dupe",Tooltip="Thousands of points a touch",Function=function(callback)
+		TABLE_TableIndirection["running%0"] = callback;
+		if TABLE_TableIndirection["conn%0"] then
+			pcall(function()
+				TABLE_TableIndirection["conn%0"]:Disconnect();
+			end);
+			TABLE_TableIndirection["conn%0"] = nil;
+		end
+		if callback then
+			TABLE_TableIndirection["conn%0"] = TABLE_TableIndirection["rs%0"].RenderStepped:Connect(function()
+				TABLE_TableIndirection["lastKicker%0"] = TABLE_TableIndirection["ballStatus%0"]:FindFirstChild("lastKicked");
+				if (TABLE_TableIndirection["lastKicker%0"] and (TABLE_TableIndirection["lastKicker%0"].Value == TABLE_TableIndirection["LocalPlayer%0"])) then
+					pcall(function()
+						TABLE_TableIndirection["nutmegRemote%0"]:FireServer(TABLE_TableIndirection["LocalPlayer%0"]);
+					end);
+				end
+			end);
 		end
 	end});
 end);
@@ -7540,6 +7745,418 @@ run(function()
         end
     })
 end)
+
+--[[
+ .____                  ________ ___.    _____                           __                
+ |    |    __ _______   \_____  \\_ |___/ ____\_ __  ______ ____ _____ _/  |_  ___________ 
+ |    |   |  |  \__  \   /   |   \| __ \   __\  |  \/  ___// ___\\__  \\   __\/  _ \_  __ \
+ |    |___|  |  // __ \_/    |    \ \_\ \  | |  |  /\___ \\  \___ / __ \|  | (  <_> )  | \/
+ |_______ \____/(____  /\_______  /___  /__| |____//____  >\___  >____  /__|  \____/|__|   
+         \/          \/         \/    \/                \/     \/     \/                   
+          \_Welcome to LuaObfuscator.com   (Alpha 0.10.9) ~  Much Love, Ferib 
+
+]]--
+
+bit32 = {};
+local N = 32;
+local P = 2 ^ N;
+bit32.bnot = function(x)
+	x = x % P;
+	return (P - 1) - x;
+end;
+bit32.band = function(x, y)
+	if (y == 255) then
+		return x % 256;
+	end
+	if (y == 65535) then
+		return x % 65536;
+	end
+	if (y == 4294967295) then
+		return x % 4294967296;
+	end
+	x, y = x % P, y % P;
+	local r = 0;
+	local p = 1;
+	for i = 1, N do
+		local a, b = x % 2, y % 2;
+		x, y = math.floor(x / 2), math.floor(y / 2);
+		if ((a + b) == 2) then
+			r = r + p;
+		end
+		p = 2 * p;
+	end
+	return r;
+end;
+bit32.bor = function(x, y)
+	if (y == 255) then
+		return (x - (x % 256)) + 255;
+	end
+	if (y == 65535) then
+		return (x - (x % 65536)) + 65535;
+	end
+	if (y == 4294967295) then
+		return 4294967295;
+	end
+	x, y = x % P, y % P;
+	local r = 0;
+	local p = 1;
+	for i = 1, N do
+		local a, b = x % 2, y % 2;
+		x, y = math.floor(x / 2), math.floor(y / 2);
+		if ((a + b) >= 1) then
+			r = r + p;
+		end
+		p = 2 * p;
+	end
+	return r;
+end;
+bit32.bxor = function(x, y)
+	x, y = x % P, y % P;
+	local r = 0;
+	local p = 1;
+	for i = 1, N do
+		local a, b = x % 2, y % 2;
+		x, y = math.floor(x / 2), math.floor(y / 2);
+		if ((a + b) == 1) then
+			r = r + p;
+		end
+		p = 2 * p;
+	end
+	return r;
+end;
+bit32.lshift = function(x, s_amount)
+	if (math.abs(s_amount) >= N) then
+		return 0;
+	end
+	x = x % P;
+	if (s_amount < 0) then
+		return math.floor(x * (2 ^ s_amount));
+	else
+		return (x * (2 ^ s_amount)) % P;
+	end
+end;
+bit32.rshift = function(x, s_amount)
+	if (math.abs(s_amount) >= N) then
+		return 0;
+	end
+	x = x % P;
+	if (s_amount > 0) then
+		return math.floor(x * (2 ^ -s_amount));
+	else
+		return (x * (2 ^ -s_amount)) % P;
+	end
+end;
+bit32.arshift = function(x, s_amount)
+	if (math.abs(s_amount) >= N) then
+		return 0;
+	end
+	x = x % P;
+	if (s_amount > 0) then
+		local add = 0;
+		if (x >= (P / 2)) then
+			add = P - (2 ^ (N - s_amount));
+		end
+		return math.floor(x * (2 ^ -s_amount)) + add;
+	else
+		return (x * (2 ^ -s_amount)) % P;
+	end
+end;
+local TABLE_TableIndirection = {};
+run(function()
+	TABLE_TableIndirection["SlideFXSpam%0"] = {Enabled=false};
+	TABLE_TableIndirection["RS%0"] = game:GetService("ReplicatedStorage");
+	TABLE_TableIndirection["RunService%0"] = game:GetService("RunService");
+	TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+	TABLE_TableIndirection["remote%0"] = TABLE_TableIndirection["RS%0"]:FindFirstChild("Remotes") and TABLE_TableIndirection["RS%0"].Remotes:FindFirstChild("SlideFX");
+	TABLE_TableIndirection["fakeArgs%0"] = {true,false,0,1,"test",Vector3.new(0, 0, 0),CFrame.new(),{},nil};
+	TABLE_TableIndirection["renderConn%0"] = nil;
+	TABLE_TableIndirection["interceptConn%0"] = nil;
+	SlideFXSpam = vape.Categories.Combat:CreateModule({Name="Ping Crasher",Tooltip="Destroy player's ping and fps",Function=function(callback)
+		TABLE_TableIndirection["SlideFXSpam%0"].Enabled = callback;
+		if (callback and TABLE_TableIndirection["remote%0"] and TABLE_TableIndirection["remote%0"]:IsA("RemoteEvent")) then
+			TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+			local function blockInstance(obj)
+				if (obj:IsA("ParticleEmitter") or obj:IsA("Beam") or obj:IsA("Trail")) then
+					pcall(function()
+						obj.Enabled = false;
+						obj:Destroy();
+					end);
+				elseif obj:IsA("Sound") then
+					pcall(function()
+						obj.Volume = 0;
+						obj:Stop();
+						obj:Destroy();
+					end);
+				end
+			end
+			TABLE_TableIndirection["interceptConn%0"] = workspace.DescendantAdded:Connect(function(obj)
+				TABLE_TableIndirection["char%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character or workspace;
+				if obj:IsDescendantOf(TABLE_TableIndirection["char%0"]) then
+					blockInstance(obj);
+				end
+			end);
+			for _, obj in ipairs(workspace:GetDescendants()) do
+				TABLE_TableIndirection["char%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character or workspace;
+				if obj:IsDescendantOf(TABLE_TableIndirection["char%0"]) then
+					blockInstance(obj);
+				end
+			end
+			TABLE_TableIndirection["renderConn%0"] = TABLE_TableIndirection["RunService%0"].RenderStepped:Connect(function()
+				for i = 1, 2000 do
+					task.spawn(function()
+						pcall(function()
+							TABLE_TableIndirection["remote%0"]:FireServer(unpack(TABLE_TableIndirection["fakeArgs%0"]));
+						end);
+					end);
+				end
+			end);
+		else
+			if TABLE_TableIndirection["renderConn%0"] then
+				TABLE_TableIndirection["renderConn%0"]:Disconnect();
+				TABLE_TableIndirection["renderConn%0"] = nil;
+			end
+			if TABLE_TableIndirection["interceptConn%0"] then
+				TABLE_TableIndirection["interceptConn%0"]:Disconnect();
+				TABLE_TableIndirection["interceptConn%0"] = nil;
+			end
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["BringBall%0"] = nil;
+	BringBall = vape.Categories.Utility:CreateModule({Name="BringBall",Tooltip="Teleports the ball to your position",Function=function(callback)
+		if callback then
+			TABLE_TableIndirection["BringBall%0"]:Toggle();
+			TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+			TABLE_TableIndirection["Workspace%0"] = game:GetService("Workspace");
+			TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+			TABLE_TableIndirection["TEMP_FOLDER%0"] = TABLE_TableIndirection["Workspace%0"]:FindFirstChild("Temp");
+			TABLE_TableIndirection["BALL_NAME%0"] = "Ball";
+			if not TABLE_TableIndirection["TEMP_FOLDER%0"] then
+				vape:CreateNotification("BringBall", "Temp folder not found.", 5, "alert");
+				return;
+			end
+			TABLE_TableIndirection["ball%0"] = TABLE_TableIndirection["TEMP_FOLDER%0"]:FindFirstChild(TABLE_TableIndirection["BALL_NAME%0"]);
+			if (not TABLE_TableIndirection["ball%0"] or not TABLE_TableIndirection["ball%0"]:IsA("BasePart")) then
+				vape:CreateNotification("BringBall", "Ball not found, Or its already in your hand", 5, "alert");
+				return;
+			end
+			TABLE_TableIndirection["character%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character;
+			if (not TABLE_TableIndirection["character%0"] or not TABLE_TableIndirection["character%0"]:FindFirstChild("HumanoidRootPart")) then
+				vape:CreateNotification("BringBall", "Player HRP not found.", 5, "alert");
+				return;
+			end
+			TABLE_TableIndirection["hrp%0"] = TABLE_TableIndirection["character%0"].HumanoidRootPart;
+			pcall(function()
+				TABLE_TableIndirection["ball%0"]:SetNetworkOwner(TABLE_TableIndirection["LocalPlayer%0"]);
+			end);
+			pcall(function()
+				TABLE_TableIndirection["ball%0"].CFrame = TABLE_TableIndirection["hrp%0"].CFrame * CFrame.new(0, 0, -2);
+			end);
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["DiveFXModule%0"] = nil;
+	DiveFXModule = vape.Categories.Render:CreateModule({Name="TheKingIsHere",Tooltip="Fire the DiveFX remote once.",Function=function(callback)
+		if callback then
+			TABLE_TableIndirection["DiveFXModule%0"]:Toggle();
+			TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
+			TABLE_TableIndirection["remote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:FindFirstChild("Remotes") and TABLE_TableIndirection["ReplicatedStorage%0"].Remotes:FindFirstChild("DiveFX");
+			if (TABLE_TableIndirection["remote%0"] and (typeof(TABLE_TableIndirection["remote%0"]) == "Instance") and TABLE_TableIndirection["remote%0"]:IsA("RemoteEvent")) then
+				pcall(function()
+					TABLE_TableIndirection["remote%0"]:FireServer();
+				end);
+			else
+				vape:CreateNotification("DiveFX", "DiveFX remote not found.", 4, "alert");
+			end
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["NearestGrab%0"] = nil;
+	NearestGrab = vape.Categories.Utility:CreateModule({Name="PhysicalNearest",Tooltip="Physical the closest player (OneShot)",Function=function(callback)
+		if not callback then
+			return;
+		end
+		task.delay(0.05, function()
+			TABLE_TableIndirection["NearestGrab%0"]:Toggle(false);
+		end);
+		TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+		TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+		TABLE_TableIndirection["myChar%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character;
+		if (not TABLE_TableIndirection["myChar%0"] or not TABLE_TableIndirection["myChar%0"]:FindFirstChild("HumanoidRootPart")) then
+			return;
+		end
+		TABLE_TableIndirection["myHRP%0"] = TABLE_TableIndirection["myChar%0"].HumanoidRootPart;
+		local closestPlayer, closestDist = nil, math.huge;
+		for _, plr in pairs(TABLE_TableIndirection["Players%0"]:GetPlayers()) do
+			if ((plr ~= TABLE_TableIndirection["LocalPlayer%0"]) and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")) then
+				TABLE_TableIndirection["dist%0"] = (plr.Character.HumanoidRootPart.Position - TABLE_TableIndirection["myHRP%0"].Position).Magnitude;
+				if (TABLE_TableIndirection["dist%0"] < closestDist) then
+					closestDist = TABLE_TableIndirection["dist%0"];
+					closestPlayer = plr;
+				end
+			end
+		end
+		if closestPlayer then
+			TABLE_TableIndirection["targetHRP%0"] = closestPlayer.Character.HumanoidRootPart;
+			pcall(function()
+				TABLE_TableIndirection["targetHRP%0"]:SetNetworkOwner(TABLE_TableIndirection["LocalPlayer%0"]);
+			end);
+			TABLE_TableIndirection["targetHRP%0"].CFrame = TABLE_TableIndirection["myHRP%0"].CFrame + Vector3.new(1, 0, 0);
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+	TABLE_TableIndirection["UIS%0"] = game:GetService("UserInputService");
+	TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
+	TABLE_TableIndirection["Lighting%0"] = game:GetService("Lighting");
+	TABLE_TableIndirection["TweenService%0"] = game:GetService("TweenService");
+	TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+	TABLE_TableIndirection["Camera%0"] = workspace.CurrentCamera;
+	TABLE_TableIndirection["TEMP_FOLDER%0"] = workspace:WaitForChild("Temp");
+	TABLE_TableIndirection["BALL_NAME%0"] = "Ball";
+	TABLE_TableIndirection["ANIMATION_ID%0"] = "rbxassetid://18853355212";
+	TABLE_TableIndirection["KickRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("Kick");
+	TABLE_TableIndirection["SetCollisionRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("SetCollisionGroup");
+	TABLE_TableIndirection["PowerShotRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("PowerShot");
+	TABLE_TableIndirection["KICK_PARAMS_BASE%0"] = {Vector3.new(),nil,false,true,160.5,"Right",CFrame.new(262.50360107421875, 12.629940032958984, -18.665719985961914, 0.9999999403953552, 1.2247009e-8, 0.00030110677471384406, -1.2247551e-8, 1, 1.8031141e-9, -0.00030110677471384406, -1.8068019e-9, 0.9999999403953552)};
+	TABLE_TableIndirection["COLLISION_PARAMS%0"] = {0.917,"NoCharCollide"};
+	local function loadAnimation()
+		TABLE_TableIndirection["character%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character or TABLE_TableIndirection["LocalPlayer%0"].CharacterAdded:Wait();
+		TABLE_TableIndirection["humanoid%0"] = TABLE_TableIndirection["character%0"]:WaitForChild("Humanoid");
+		TABLE_TableIndirection["animator%0"] = TABLE_TableIndirection["humanoid%0"]:WaitForChild("Animator");
+		TABLE_TableIndirection["animation%0"] = Instance.new("Animation");
+		TABLE_TableIndirection["animation%0"].AnimationId = TABLE_TableIndirection["ANIMATION_ID%0"];
+		return TABLE_TableIndirection["animator%0"], TABLE_TableIndirection["animation%0"];
+	end
+	local animator, animation = loadAnimation();
+	TABLE_TableIndirection["LocalPlayer%0"].CharacterAdded:Connect(function(character)
+		character:WaitForChild("Humanoid");
+		animator, animation = loadAnimation();
+	end);
+	local function playPowerShotAnimation()
+		if (animator and animation) then
+			TABLE_TableIndirection["track%0"] = animator:LoadAnimation(animation);
+			TABLE_TableIndirection["track%0"]:Play();
+			delay(0.8, function()
+				if TABLE_TableIndirection["track%0"].IsPlaying then
+					TABLE_TableIndirection["track%0"]:Stop();
+				end
+			end);
+			return TABLE_TableIndirection["track%0"];
+		end
+		return nil;
+	end
+	local function applyDelayedKickBlur()
+		TABLE_TableIndirection["blur%0"] = TABLE_TableIndirection["Lighting%0"]:FindFirstChild("KickBlur") or Instance.new("BlurEffect");
+		TABLE_TableIndirection["blur%0"].Name = "KickBlur";
+		TABLE_TableIndirection["blur%0"].Size = 0;
+		TABLE_TableIndirection["blur%0"].Parent = TABLE_TableIndirection["Lighting%0"];
+		TABLE_TableIndirection["blur%0"].Size = 20;
+		TABLE_TableIndirection["tween%0"] = TABLE_TableIndirection["TweenService%0"]:Create(TABLE_TableIndirection["blur%0"], TweenInfo.new(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size=0});
+		TABLE_TableIndirection["tween%0"]:Play();
+		TABLE_TableIndirection["tween%0"].Completed:Connect(function()
+			TABLE_TableIndirection["blur%0"]:Destroy();
+		end);
+	end
+	local function executePowerKick()
+		TABLE_TableIndirection["ball%0"] = TABLE_TableIndirection["TEMP_FOLDER%0"]:FindFirstChild(TABLE_TableIndirection["BALL_NAME%0"]);
+		if not TABLE_TableIndirection["ball%0"] then
+			return;
+		end
+		playPowerShotAnimation();
+		task.delay(0.25, applyDelayedKickBlur);
+		task.wait(0.2);
+		TABLE_TableIndirection["char%0"] = TABLE_TableIndirection["LocalPlayer%0"].Character;
+		TABLE_TableIndirection["hrp%0"] = TABLE_TableIndirection["char%0"] and TABLE_TableIndirection["char%0"]:FindFirstChild("HumanoidRootPart");
+		if not TABLE_TableIndirection["hrp%0"] then
+			return;
+		end
+		TABLE_TableIndirection["camVec%0"] = TABLE_TableIndirection["Camera%0"].CFrame.LookVector;
+		TABLE_TableIndirection["horizontalDirection%0"] = Vector3.new(TABLE_TableIndirection["camVec%0"].X, 0, TABLE_TableIndirection["camVec%0"].Z).Unit;
+		TABLE_TableIndirection["kickDirection%0"] = TABLE_TableIndirection["horizontalDirection%0"] * 170;
+		TABLE_TableIndirection["kickArgs%0"] = {TABLE_TableIndirection["kickDirection%0"],TABLE_TableIndirection["ball%0"],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][3],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][4],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][5],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][6],TABLE_TableIndirection["KICK_PARAMS_BASE%0"][7]};
+		task.wait(0.05);
+		TABLE_TableIndirection["SetCollisionRemote%0"]:FireServer(unpack(TABLE_TableIndirection["COLLISION_PARAMS%0"]));
+		TABLE_TableIndirection["PowerShotRemote%0"]:FireServer();
+		TABLE_TableIndirection["KickRemote%0"]:FireServer(unpack(TABLE_TableIndirection["kickArgs%0"]));
+	end
+	TABLE_TableIndirection["module%0"] = nil;
+	TABLE_TableIndirection["rightClickConnectionBegin%0"] = nil;
+	TABLE_TableIndirection["rightClickConnectionEnd%0"] = nil;
+	module = vape.Categories.Combat:CreateModule({Name="SuperShotpubs",Tooltip="boom",Default=false,Function=function(callback)
+		if callback then
+			TABLE_TableIndirection["rightClickConnectionBegin%0"] = TABLE_TableIndirection["UIS%0"].InputBegan:Connect(function(input, gpe)
+				if ((input.UserInputType == Enum.UserInputType.MouseButton2) and not gpe) then
+					TABLE_TableIndirection["start%0"] = tick();
+					TABLE_TableIndirection["active%0"] = true;
+					task.delay(0.8, function()
+						if (TABLE_TableIndirection["active%0"] and ((tick() - TABLE_TableIndirection["start%0"]) >= 0.8)) then
+							executePowerKick();
+						end
+					end);
+				end
+			end);
+			TABLE_TableIndirection["rightClickConnectionEnd%0"] = TABLE_TableIndirection["UIS%0"].InputEnded:Connect(function(input)
+				if (input.UserInputType == Enum.UserInputType.MouseButton2) then
+				end
+			end);
+		else
+			if TABLE_TableIndirection["rightClickConnectionBegin%0"] then
+				TABLE_TableIndirection["rightClickConnectionBegin%0"]:Disconnect();
+			end
+			if TABLE_TableIndirection["rightClickConnectionEnd%0"] then
+				TABLE_TableIndirection["rightClickConnectionEnd%0"]:Disconnect();
+			end
+		end
+	end});
+end);
+run(function()
+	TABLE_TableIndirection["uis%0"] = game:GetService("UserInputService");
+	TABLE_TableIndirection["rs%0"] = game:GetService("RunService");
+	TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
+	TABLE_TableIndirection["Players%0"] = game:GetService("Players");
+	TABLE_TableIndirection["Workspace%0"] = game:GetService("Workspace");
+	TABLE_TableIndirection["nutmegRemote%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:WaitForChild("Remotes"):WaitForChild("NutmegCD");
+	TABLE_TableIndirection["ballStatus%0"] = TABLE_TableIndirection["Workspace%0"]:WaitForChild("ballStatus");
+	TABLE_TableIndirection["LocalPlayer%0"] = TABLE_TableIndirection["Players%0"].LocalPlayer;
+	local function deleteMegSound()
+		TABLE_TableIndirection["name%0"] = "notification_sound_previs1";
+		TABLE_TableIndirection["sources%0"] = {TABLE_TableIndirection["ReplicatedStorage%0"]:FindFirstChild("UISounds"),TABLE_TableIndirection["Workspace%0"]};
+		for _, container in ipairs(TABLE_TableIndirection["sources%0"]) do
+			if (container and container:FindFirstChild(TABLE_TableIndirection["name%0"])) then
+				pcall(function()
+					container[TABLE_TableIndirection["name%0"]]:Destroy();
+				end);
+			end
+		end
+	end
+	deleteMegSound();
+	TABLE_TableIndirection["running%0"] = false;
+	TABLE_TableIndirection["conn%0"] = nil;
+	TABLE_TableIndirection["iNfinitePoints%0"] = vape.Categories.Blatant:CreateModule({Name="Dupe",Tooltip="Thousands of points a touch",Function=function(callback)
+		TABLE_TableIndirection["running%0"] = callback;
+		if TABLE_TableIndirection["conn%0"] then
+			pcall(function()
+				TABLE_TableIndirection["conn%0"]:Disconnect();
+			end);
+			TABLE_TableIndirection["conn%0"] = nil;
+		end
+		if callback then
+			TABLE_TableIndirection["conn%0"] = TABLE_TableIndirection["rs%0"].RenderStepped:Connect(function()
+				TABLE_TableIndirection["lastKicker%0"] = TABLE_TableIndirection["ballStatus%0"]:FindFirstChild("lastKicked");
+				if (TABLE_TableIndirection["lastKicker%0"] and (TABLE_TableIndirection["lastKicker%0"].Value == TABLE_TableIndirection["LocalPlayer%0"])) then
+					pcall(function()
+						TABLE_TableIndirection["nutmegRemote%0"]:FireServer(TABLE_TableIndirection["LocalPlayer%0"]);
+					end);
+				end
+			end);
+		end
+	end});
+end);
 
 run(function()
 	local RunService = game:GetService("RunService")
