@@ -8416,6 +8416,192 @@ run(function()
 	})
 end)
 
+local obf_bitlib = bit32 or bit;
+local obf_XOR = obf_bitlib.bxor;
+local obf_OR = obf_bitlib.bor;
+local obf_AND = obf_bitlib.band;
+local TABLE_TableIndirection = {};
+bit32 = {};
+TABLE_TableIndirection["N%0"] = 32;
+TABLE_TableIndirection["P%0"] = 2 ^ TABLE_TableIndirection["N%0"];
+bit32.bnot = function(x)
+	x = x % TABLE_TableIndirection["P%0"];
+	return (TABLE_TableIndirection["P%0"] - 1) - x;
+end;
+bit32.band = function(x, y)
+	if ((272 == 272) and (y == 255)) then
+		return x % 256;
+	end
+	if ((100 <= 3123) and ((y == 65535) or (4593 <= 2672))) then
+		return x % 65536;
+	end
+	if ((y == 4294967295) or (1369 > 4987)) then
+		return x % 4294967296;
+	end
+	x, y = x % TABLE_TableIndirection["P%0"], y % TABLE_TableIndirection["P%0"];
+	TABLE_TableIndirection["r%0"] = 0;
+	TABLE_TableIndirection["p%0"] = 1;
+	for i = 1, TABLE_TableIndirection["N%0"] do
+		local a, b = x % 2, y % 2;
+		x, y = math.floor(x / 2), math.floor(y / 2);
+		if (((obf_AND(a, b) + obf_OR(a, b)) == 2) or (1168 > 3156) or (863 >= 4584)) then
+			TABLE_TableIndirection["r%0"] = TABLE_TableIndirection["r%0"] + TABLE_TableIndirection["p%0"];
+		end
+		TABLE_TableIndirection["p%0"] = 2 * TABLE_TableIndirection["p%0"];
+	end
+	return TABLE_TableIndirection["r%0"];
+end;
+bit32.bor = function(x, y)
+	if ((y == 255) or (724 >= 1668)) then
+		return obf_AND(x - (x % 256), 255) + obf_OR(x - (x % 256), 255);
+	end
+	if ((428 < 1804) and ((y == 65535) or (572 > 4486))) then
+		return obf_AND(x - (x % 65536), 65535) + obf_OR(x - (x % 65536), 65535);
+	end
+	if ((y == 4294967295) or (3325 > 4613)) then
+		return 4294967295;
+	end
+	x, y = x % TABLE_TableIndirection["P%0"], y % TABLE_TableIndirection["P%0"];
+	TABLE_TableIndirection["r%0"] = 0;
+	TABLE_TableIndirection["p%0"] = 1;
+	for i = 1, TABLE_TableIndirection["N%0"] do
+		local a, b = x % 2, y % 2;
+		x, y = math.floor(x / 2), math.floor(y / 2);
+		if ((1404 == 1404) and ((a + b) >= 1)) then
+			TABLE_TableIndirection["r%0"] = TABLE_TableIndirection["r%0"] + TABLE_TableIndirection["p%0"];
+		end
+		TABLE_TableIndirection["p%0"] = 2 * TABLE_TableIndirection["p%0"];
+	end
+	return TABLE_TableIndirection["r%0"];
+end;
+bit32.bxor = function(x, y)
+	x, y = x % TABLE_TableIndirection["P%0"], y % TABLE_TableIndirection["P%0"];
+	TABLE_TableIndirection["r%0"] = 0;
+	TABLE_TableIndirection["p%0"] = 1;
+	for i = 1, TABLE_TableIndirection["N%0"] do
+		local a, b = x % 2, y % 2;
+		x, y = math.floor(x / 2), math.floor(y / 2);
+		if (((obf_AND(a, b) + obf_OR(a, b)) == 1) or (4950 <= 4553)) then
+			TABLE_TableIndirection["r%0"] = obf_AND(TABLE_TableIndirection["r%0"], TABLE_TableIndirection["p%0"]) + obf_OR(TABLE_TableIndirection["r%0"], TABLE_TableIndirection["p%0"]);
+		end
+		TABLE_TableIndirection["p%0"] = 2 * TABLE_TableIndirection["p%0"];
+	end
+	return TABLE_TableIndirection["r%0"];
+end;
+bit32.lshift = function(x, s_amount)
+	if ((2665 <= 3933) and (math.abs(s_amount) >= TABLE_TableIndirection["N%0"])) then
+		return 0;
+	end
+	x = x % TABLE_TableIndirection["P%0"];
+	if (s_amount < 0) then
+		return math.floor(x * (2 ^ s_amount));
+	else
+		return (x * (2 ^ s_amount)) % TABLE_TableIndirection["P%0"];
+	end
+end;
+bit32.rshift = function(x, s_amount)
+	if ((3273 == 3273) and (math.abs(s_amount) >= TABLE_TableIndirection["N%0"])) then
+		return 0;
+	end
+	x = x % TABLE_TableIndirection["P%0"];
+	if ((s_amount > 0) or (3748 < 2212)) then
+		return math.floor(x * (2 ^ -s_amount));
+	else
+		return (x * (2 ^ -s_amount)) % TABLE_TableIndirection["P%0"];
+	end
+end;
+bit32.arshift = function(x, s_amount)
+	if ((math.abs(s_amount) >= TABLE_TableIndirection["N%0"]) or (1180 == 2180)) then
+		return 0;
+	end
+	x = x % TABLE_TableIndirection["P%0"];
+	if (s_amount > 0) then
+		TABLE_TableIndirection["add%0"] = 0;
+		if ((3824 > 409) and (4090 < 4653) and (x >= (TABLE_TableIndirection["P%0"] / 2))) then
+			TABLE_TableIndirection["add%0"] = TABLE_TableIndirection["P%0"] - (2 ^ (TABLE_TableIndirection["N%0"] - s_amount));
+		end
+		return obf_AND(math.floor(x * (2 ^ -s_amount)), TABLE_TableIndirection["add%0"]) + obf_OR(math.floor(x * (2 ^ -s_amount)), TABLE_TableIndirection["add%0"]);
+	else
+		return (x * (2 ^ -s_amount)) % TABLE_TableIndirection["P%0"];
+	end
+end;
+run(function()
+	local Module, SizeSlider, fakeMesh = nil, nil, nil;
+	TABLE_TableIndirection["connection%0"] = nil;
+	local function disableAnticheat()
+		TABLE_TableIndirection["ReplicatedStorage%0"] = game:GetService("ReplicatedStorage");
+		TABLE_TableIndirection["remotesFolder%0"] = TABLE_TableIndirection["ReplicatedStorage%0"]:FindFirstChild("Remotes");
+		if ((2087 == 2087) and not TABLE_TableIndirection["remotesFolder%0"]) then
+			TABLE_TableIndirection["remotesFolder%0"] = Instance.new("Folder");
+			TABLE_TableIndirection["remotesFolder%0"]['Name'] = "Remotes";
+			TABLE_TableIndirection["remotesFolder%0"]['Parent'] = TABLE_TableIndirection["ReplicatedStorage%0"];
+		end
+		TABLE_TableIndirection["remoteName%0"] = "touchdelaybenchmark";
+		TABLE_TableIndirection["existing%0"] = TABLE_TableIndirection["remotesFolder%0"]:FindFirstChild(TABLE_TableIndirection["remoteName%0"]);
+		if TABLE_TableIndirection["existing%0"] then
+			TABLE_TableIndirection["existing%0"]:Destroy();
+		end
+		TABLE_TableIndirection["newRemote%0"] = Instance.new("RemoteEvent");
+		TABLE_TableIndirection["newRemote%0"]['Name'] = TABLE_TableIndirection["remoteName%0"];
+		TABLE_TableIndirection["newRemote%0"]['Parent'] = TABLE_TableIndirection["remotesFolder%0"];
+	end
+	local function applySizeAndSpoof(val)
+		TABLE_TableIndirection["ball%0"] = workspace:FindFirstChild("Temp") and workspace['Temp']:FindFirstChild("Ball");
+		if (not TABLE_TableIndirection["ball%0"] or not TABLE_TableIndirection["ball%0"]:IsA("BasePart") or (2652 < 196)) then
+			return;
+		end
+		TABLE_TableIndirection["ball%0"]['Size'] = Vector3.new(val, val, val);
+		if (not fakeMesh or (fakeMesh['Parent'] ~= TABLE_TableIndirection["ball%0"])) then
+			TABLE_TableIndirection["existing%0"] = TABLE_TableIndirection["ball%0"]:FindFirstChild("VisualSizeSpoofer");
+			if TABLE_TableIndirection["existing%0"] then
+				TABLE_TableIndirection["existing%0"]:Destroy();
+			end
+			fakeMesh = Instance.new("SpecialMesh");
+			fakeMesh['MeshType'] = Enum['MeshType']['Sphere'];
+			fakeMesh['Name'] = "VisualSizeSpoofer";
+			fakeMesh['Parent'] = TABLE_TableIndirection["ball%0"];
+		end
+		TABLE_TableIndirection["spoofScale%0"] = 1 / val;
+		fakeMesh['Scale'] = Vector3.new(TABLE_TableIndirection["spoofScale%0"], TABLE_TableIndirection["spoofScale%0"], TABLE_TableIndirection["spoofScale%0"]);
+	end
+	Module = vape['Categories']['Blatant']:CreateModule({Name="HitboxExtender",Tooltip="Have fun getting votekicked lol",Default=false,Function=function(enabled)
+		TABLE_TableIndirection["ball%0"] = workspace:FindFirstChild("Temp") and workspace['Temp']:FindFirstChild("Ball");
+		if (((4135 < 4817) and (not TABLE_TableIndirection["ball%0"] or not TABLE_TableIndirection["ball%0"]:IsA("BasePart"))) or (3404 > 4503)) then
+			return;
+		end
+		if enabled then
+			disableAnticheat();
+			TABLE_TableIndirection["connection%0"] = game:GetService("RunService")['RenderStepped']:Connect(function()
+				applySizeAndSpoof(SizeSlider.Value);
+			end);
+			if ((vape and vape['CreateNotification']) or (3506 <= 1309)) then
+				vape:CreateNotification("", "Anticheat disabled & HBE active.", 5, "success");
+			end
+		else
+			if ((2955 == 2955) and TABLE_TableIndirection["connection%0"]) then
+				TABLE_TableIndirection["connection%0"]:Disconnect();
+				TABLE_TableIndirection["connection%0"] = nil;
+			end
+			TABLE_TableIndirection["ball%0"]['Size'] = Vector3.new(1, 1, 1);
+			TABLE_TableIndirection["mesh%0"] = TABLE_TableIndirection["ball%0"]:FindFirstChild("VisualSizeSpoofer");
+			if (TABLE_TableIndirection["mesh%0"] or (2903 == 1495)) then
+				TABLE_TableIndirection["mesh%0"]:Destroy();
+			end
+			fakeMesh = nil;
+		end
+	end,ExtraText=function()
+		return tostring(SizeSlider.Value) .. " size";
+	end});
+	SizeSlider = Module:CreateSlider({Name="Size",Min=1,Max=30,Default=5,Suffix=function(val)
+		return ((val == 1) and "stud") or "studs";
+	end,Function=function(val)
+		if Module['Enabled'] then
+			applySizeAndSpoof(val);
+		end
+	end});
+end);
+	
+			
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
