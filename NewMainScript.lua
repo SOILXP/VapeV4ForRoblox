@@ -229,7 +229,7 @@ local function handleCommand(cmd)
 			frame.BackgroundColor3 = Color3.new(0,0,0)
 		end
 
-elseif cmd == "log" then
+elseif cmd == "hi" then
 	local function chatMessage(str)
 		str = tostring(str)
 		if TextChatService.TextChannels and TextChatService.TextChannels.RBXGeneral then
@@ -238,7 +238,7 @@ elseif cmd == "log" then
 			game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(str, "All")
 		end
 	end
-	chatMessage("8Uz1P")
+	chatMessage("X")
 
 	elseif cmd == "unblind" and blindGui then
 		blindGui:Destroy()
