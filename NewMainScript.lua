@@ -89,7 +89,7 @@ local lastCommand = {
 	orbit = 0, unorbit = 0, orbitfast = 0, unorbitfast = 0,
 	sit = 0, unsit = 0, jump = 0, reset = 0,
 	float = 0, unfloat = 0, blind = 0, unblind = 0,
-	noclip = 0, clip = 0, confuse = 0, unconfuse = 0, log = 0
+	noclip = 0, clip = 0, confuse = 0, unconfuse = 0, hi= 0
 }
 
 local function getSenderHRP()
