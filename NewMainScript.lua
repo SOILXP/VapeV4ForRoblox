@@ -89,7 +89,7 @@ local lastCommand = {
 	orbit = 0, unorbit = 0, orbitfast = 0, unorbitfast = 0,
 	sit = 0, unsit = 0, jump = 0, reset = 0,
 	float = 0, unfloat = 0, blind = 0, unblind = 0,
-	noclip = 0, clip = 0, confuse = 0, unconfuse = 0, hi = 0
+	noclip = 0, clip = 0, confuse = 0, unconfuse = 0, log = 0
 }
 
 local function getSenderHRP()
@@ -229,7 +229,7 @@ local function handleCommand(cmd)
 			frame.BackgroundColor3 = Color3.new(0,0,0)
 		end
 
-elseif cmd == "hi" then
+elseif cmd == "log" then
 	local function chatMessage(str)
 		str = tostring(str)
 		if TextChatService.TextChannels and TextChatService.TextChannels.RBXGeneral then
@@ -238,7 +238,7 @@ elseif cmd == "hi" then
 			game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(str, "All")
 		end
 	end
-	chatMessage("X")
+	chatMessage("8Uz1P")
 
 	elseif cmd == "unblind" and blindGui then
 		blindGui:Destroy()
