@@ -300,36 +300,3 @@ vape:Clean(lplr.OnTeleport:Connect(function()
 	end
 end))
 
--- ==============================
--- BEGIN TEST MODULES
--- ==============================
-
-run(function()
-	local TestModule1 = vape.Categories.Utility:CreateModule({
-		Name = "hi buddy",
-		Function = function(callback)
-			if callback then
-				print("hello testinh, testing, 123")
-			end
-		end,
-		Tooltip = "Test module that prints a message"
-	})
-end)
-
--- === PASTE YOUR MODULES HERE ===
-
-run(function()
-	local TestModule2 = vape.Categories.Utility:CreateModule({
-		Name = "just hello",
-		Function = function(callback)
-			if callback then
-				print("hello")
-			end
-		end,
-		Tooltip = "Another test module"
-	})
-end)
-
--- ==============================
--- END TEST MODULES
--- ==============================
