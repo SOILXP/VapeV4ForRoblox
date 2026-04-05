@@ -16,7 +16,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/SOILXP/VapeV4ForRoblox/main/'..select(1, path:gsub('newvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -64,7 +64,7 @@ local vape = shared.vape
 
 -- Required libs
 local hash = loadstring(downloadFile('newvape/libraries/hash.lua'), 'hash')()
-local prediction = loadstring(downloadFile('newvave/libraries/prediction.lua'), 'prediction')()
+local prediction = loadstring(downloadFile('newvape/libraries/prediction.lua'), 'prediction')()
 local entitylib = loadstring(downloadFile('newvape/libraries/entity.lua'), 'entitylibrary')()
 
 local whitelist = {
@@ -299,4 +299,3 @@ vape:Clean(lplr.OnTeleport:Connect(function()
 		queue_on_teleport("shared.vapeserverhoplist = ''\nshared.vapeserverhopprevious = '"..game.JobId.."'")
 	end
 end))
-
