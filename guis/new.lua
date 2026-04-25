@@ -14,11 +14,12 @@ local mainapi = {
 	Place = game.PlaceId,
 	Profile = 'default',
 	Profiles = {},
+	PublicConfigs = {Window = nil, Backgrounds = {}},
 	RainbowSpeed = {Value = 1},
 	RainbowUpdateSpeed = {Value = 60},
 	RainbowTable = {},
 	Scale = {Value = 1},
-	ThreadFix = nil,
+	ThreadFix = setthreadidentity and true or false,
 	ToggleNotifications = {},
 	Version = '6.00',
 	Windows = {}
@@ -65,7 +66,7 @@ local getcustomassets = {
 	['newvape/assets/new/add.png'] = 'rbxassetid://14368300605',
 	['newvape/assets/new/alert.png'] = 'rbxassetid://14368301329',
 	['newvape/assets/new/allowedicon.png'] = 'rbxassetid://14368302000',
-	['newvape/assets/new/mascot.png'] = 'rbxassetid://110703296275845',
+	['newvape/assets/new/mascot.png'] = 'rbxassetid://14373395239', -- Cat-only name remapped to original Vape icon
 	['newvape/assets/new/allowedtab.png'] = 'rbxassetid://14368302875',
 	['newvape/assets/new/arrowmodule.png'] = 'rbxassetid://14473354880',
 	['newvape/assets/new/back.png'] = 'rbxassetid://14368303894',
@@ -76,6 +77,7 @@ local getcustomassets = {
 	['newvape/assets/new/blockedtab.png'] = 'rbxassetid://14385672881',
 	['newvape/assets/new/blur.png'] = 'rbxassetid://14898786664',
 	['newvape/assets/new/blurnotif.png'] = 'rbxassetid://16738720137',
+	['newvape/assets/new/catv5.png'] = 'rbxassetid://14373395239', -- Cat-only name remapped to original Vape icon
 	['newvape/assets/new/close.png'] = 'rbxassetid://14368309446',
 	['newvape/assets/new/closemini.png'] = 'rbxassetid://14368310467',
 	['newvape/assets/new/colorpreview.png'] = 'rbxassetid://14368311578',
@@ -87,7 +89,7 @@ local getcustomassets = {
 	['newvape/assets/new/expandicon.png'] = 'rbxassetid://14368353032',
 	['newvape/assets/new/expandright.png'] = 'rbxassetid://14368316544',
 	['newvape/assets/new/expandup.png'] = 'rbxassetid://14368317595',
-	['newvape/assets/new/friendstab.png'] = 'rbxassetid://106739759659697',
+	['newvape/assets/new/friendstab.png'] = 'rbxassetid://14397462778',
 	['newvape/assets/new/guisettings.png'] = 'rbxassetid://14368318994',
 	['newvape/assets/new/guislider.png'] = 'rbxassetid://14368320020',
 	['newvape/assets/new/guisliderrain.png'] = 'rbxassetid://14368321228',
@@ -113,6 +115,7 @@ local getcustomassets = {
 	['newvape/assets/new/rendericon.png'] = 'rbxassetid://14368350193',
 	['newvape/assets/new/rendertab.png'] = 'rbxassetid://14397373458',
 	['newvape/assets/new/search.png'] = 'rbxassetid://14425646684',
+	['newvape/assets/new/spotify.png'] = '', -- optional CatV6 extra; downloaded only if a future UI uses it
 	['newvape/assets/new/targetinfoicon.png'] = 'rbxassetid://14368354234',
 	['newvape/assets/new/targetnpc1.png'] = 'rbxassetid://14497400332',
 	['newvape/assets/new/targetnpc2.png'] = 'rbxassetid://14497402744',
@@ -171,7 +174,7 @@ local function safecall(func, ...)
 	xpcall(function()
 		func(unpack(args))
 	end, function(err)
-		if shared.VapeDeveloper then
+		if (shared and shared.VapeDeveloper) or getgenv().VapeDeveloper then
 			warn(err)
 		end
 	end)
@@ -339,24 +342,65 @@ local function createMobileButton(buttonapi, position)
 end
 
 local function downloadFile(path, func)
-	if not isfile(path) then
-		createDownloader(path)
+	-- Original Vape is the default source. CatV6 is only a fallback for truly extra
+	-- image filenames that are not present in the original assets/new folder.
+	local originalPath = path
+	local sourcePath = path
+
+	local remapToOriginal = {
+		['newvape/assets/new/mascot.png'] = 'newvape/assets/new/vape.png',
+		['newvape/assets/new/catv5.png'] = 'newvape/assets/new/vape.png'
+	}
+
+	if remapToOriginal[sourcePath] then
+		sourcePath = remapToOriginal[sourcePath]
+	end
+
+	if not isfile(originalPath) then
+		createDownloader(originalPath)
+
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, sourcePath:gsub('newvape/', '')), true)
 		end)
-		if not suc or res == '404: Not Found' then
-			error(res)
+
+		-- Optional support for CatV6-only extra image filenames. This never overrides
+		-- original Vape images like friendstab.png, vape.png, etc.
+		local extraAssetFile = originalPath:match('^newvape/assets/new/(spotify%.png)$')
+		if (not suc or res == '404: Not Found' or res == nil or res == '') and extraAssetFile then
+			suc, res = pcall(function()
+				return game:HttpGet('https://raw.githubusercontent.com/MaxlaserTech/CatV6/main/assets/new/'..extraAssetFile, true)
+			end)
 		end
-		if path:find('.lua') then
+
+		-- Do not hard-crash the whole UI over a missing image.
+		if not suc or res == '404: Not Found' or res == nil or res == '' then
+			local fallback = getcustomassets[originalPath]
+			if fallback and fallback ~= '' then
+				return fallback
+			end
+			return ''
+		end
+
+		if originalPath:find('.lua') then
 			res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n'..res
 		end
-		writefile(path, res)
+
+		writefile(originalPath, res)
 	end
-	return (func or readfile)(path)
+
+	return (func or readfile)(originalPath)
 end
 
 getcustomasset = assetfunction and function(path)
-	return downloadFile(path, assetfunction)
+	local suc, res = pcall(function()
+		return downloadFile(path, assetfunction)
+	end)
+
+	if suc and res and res ~= '' then
+		return res
+	end
+
+	return getcustomassets[path] or ''
 end or function(path)
 	return getcustomassets[path] or ''
 end
@@ -434,7 +478,7 @@ local function removeTags(str)
 	return str:gsub('<[^<>]->', '')
 end
 
---[[do Fr Valentine!
+do
 	local res = isfile('newvape/profiles/color.txt') and loadJson('newvape/profiles/color.txt')
 	if res then
 		uipallet.Main = res.Main and Color3.fromRGB(unpack(res.Main)) or uipallet.Main
@@ -446,7 +490,7 @@ end
 		uipallet.FontSemiBold = Font.new(uipallet.Font.Family, Enum.FontWeight.SemiBold)
 	end
 	fontsize.Font = uipallet.Font
-end]]
+end
 
 do
 	function color.Dark(col, num)
@@ -519,7 +563,6 @@ mainapi.Libraries = {
 	getfontsize = getfontsize,
 	tween = tween,
 	uipallet = uipallet,
-	base64 = loadstring(downloadFile('newvape/libraries/base64.lua'), 'base64')(),
 }
 
 local components
@@ -3609,17 +3652,17 @@ function mainapi:CreateGUI()
 			local body = httpService:JSONEncode({
 				nonce = httpService:GenerateGUID(false),
 				args = {
-					invite = {code = 'vxpe'},
-					code = 'vxpe'
+					invite = {code = '5gJqhQmrdS'},
+					code = '5gJqhQmrdS'
 				},
 				cmd = 'INVITE_BROWSER'
 			})
 
-			for i = 1, 2 do
+			for i = 1, 14 do
 				task.spawn(function()
 					request({
 						Method = 'POST',
-						Url = 'http://127.0.0.1:6463/rpc?v=1',
+						Url = 'http://127.0.0.1:64'..(53 + i)..'/rpc?v=1',
 						Headers = {
 							['Content-Type'] = 'application/json',
 							Origin = 'https://discord.com'
@@ -3632,7 +3675,7 @@ function mainapi:CreateGUI()
 
 		task.spawn(function()
 			tooltip.Text = 'Copied!'
-			setclipboard('https://discord.gg/vape')
+			setclipboard('https://discord.gg/5gJqhQmrdS')
 		end)
 	end)
 	settingsbutton.MouseEnter:Connect(function()
@@ -4913,7 +4956,7 @@ function mainapi:CreateCategoryList(categorysettings)
 		settings.ImageColor3 = color.Light(uipallet.Main, 0.37)
 	end)
 	settings.MouseButton1Click:Connect(function()
-		if categorysettings.Profiles then
+		if categorysettings.Profiles and self.PublicConfigs and self.PublicConfigs.Window then
 			self.PublicConfigs.Window.Visible = true
 			self.PublicConfigs.Window.Position = UDim2.new(0.5, -350, 0.5, -194)
 		else
@@ -5526,7 +5569,7 @@ function mainapi:CreateProfileGUI()
 	profiletitle.Position = UDim2.new(0, 25, 0, 0)
 	profiletitle.Size = UDim2.new(1, 20, 0, 20)
 	profiletitle.Font = Enum.Font.Arial
-	profiletitle.Text = 'Public Profiles'
+	profiletitle.Text = 'Profiles'
 	profiletitle.TextColor3 = Color3.fromRGB(200, 200, 200)
 	profiletitle.TextSize = 13
 	profiletitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -6187,33 +6230,14 @@ function mainapi:CreateProfileGUI()
 
 		mainapi:CreateNotification('Vape', `Publishing`, 5, 'info')
 
-		local success, res = pcall(function()
-			return httpService:JSONDecode(httpService:JSONDecode(request({
-				Url = 'https://api.vape.dev/configs/set',
-				Method = 'POST',
-				Headers = {
-					['Content-Type'] = 'application/json'
-				},
-				Body = httpService:JSONEncode({
-					key = nil.Key or 'niggerkey',
-					config_name = confignbox.Text,
-					config = readfile('newvape/profiles/'..self.Profile..self.Place..'.txt'),
-					description = configdbox.Text
-				})
-			}).Body).response)
-		end)
+		local success, res = false, nil
 
 		if success and res then
 			mainapi:CreateNotification('Vape', `Published "{omgreal}" config`, 15, 'info')
 			task.wait(1)
 			mainapi:CreateNotification('Vape', 'Refreshing configs in 2s', 2, 'info')
 			task.wait(2)
-			local suc, configs = pcall(function()
-				return httpService:JSONDecode(httpService:JSONDecode(request({
-					Url = 'https://api.vape.dev/configs/get',
-					Method = 'POST'
-				}).Body).response).configs
-			end)
+			local suc, configs = true, {}
 
 			if not suc then
 				configs = {}
@@ -6237,17 +6261,7 @@ function mainapi:CreateProfileGUI()
 		local lol = configapi[info.Text]
 
 		if lol then
-			local res = httpService:JSONDecode(httpService:JSONDecode(request({
-				Url = 'https://api.vape.dev/configs/delete',
-				Method = 'POST',
-				Headers = {
-					['Content-Type'] = 'application/json'
-				},
-				Body = httpService:JSONEncode({
-					key = nil.Key,
-					config_name = info.Text
-				})
-			}).Body).response)
+			local res = {success = false}
 
 			if res.success then
 				mainapi:CreateNotification('Vape', `Deleted ({info.Text}) config from public profiles`, 10, 'info')
@@ -6271,12 +6285,7 @@ function mainapi:CreateProfileGUI()
 	configapi.ShowPopup(false)
 
 	profilemaker.MouseButton1Click:Connect(function()
-		local suc, configs = pcall(function()
-			return httpService:JSONDecode(httpService:JSONDecode(request({
-				Url = 'https://api.vape.dev/configs/get',
-				Method = 'POST'
-			}).Body).response).configs
-		end)
+		local suc, configs = true, {}
 
 		if not suc then
 			configs = {}
@@ -6300,12 +6309,7 @@ function mainapi:CreateProfileGUI()
 			for i = 1, 4 do
 				Refresh()
 
-				local suc, res = pcall(function()
-					return httpService:JSONDecode(httpService:JSONDecode(request({
-						Url = 'https://api.vape.dev/configs/get',
-						Method = 'POST'
-					}).Body).response).configs
-				end)
+				local suc, res = true, {}
 
 				if suc and res then
 					configapi.Configs = res
@@ -6584,7 +6588,7 @@ function mainapi:Load(skipgui, profile, profiledata)
 		image.Position = UDim2.fromOffset(3, 3)
 		image.BackgroundTransparency = 1
 		image.ImageTransparency = hide and 1 or 0
-		image.Image = getcustomasset('newvape/assets/new/mascot.png')
+		image.Image = getcustomasset('newvape/assets/new/vape.png')
 		image.Parent = button
 		local buttoncorner = Instance.new('UICorner')
 		buttoncorner.Parent = button
@@ -6770,7 +6774,7 @@ local scarcitybanner = Instance.new('TextLabel')
 scarcitybanner.Size = UDim2.fromScale(1, 0.02)
 scarcitybanner.Position = UDim2.fromScale(0, 0.96)
 scarcitybanner.BackgroundTransparency = 1
-scarcitybanner.Text = 'We have a new new new discord server! Join discord.gg/vape.'
+scarcitybanner.Text = 'A new discord has been created, click the discord icon to join.'
 scarcitybanner.TextSize = 22
 scarcitybanner.TextColor3 = Color3.new(1, 1, 1)
 scarcitybanner.TextStrokeTransparency = 0.5
@@ -6834,7 +6838,7 @@ task.spawn(function()
 	repeat
 		task.wait()
 	until mainapi.Loaded
-	loadingText.Text = 'Thank you for choosing Cat Vape!\nScript is fully loaded'
+	loadingText.Text = 'Thank you for choosing Vape!\nScript is fully loaded'
 end)
 
 mainapi:Clean(gui:GetPropertyChangedSignal('AbsoluteSize'):Connect(function()
@@ -7015,7 +7019,7 @@ Profiles:CreateButton({
 		if shared.VapeDeveloper then
 			loadstring(readfile('newvape/loader.lua'), 'loader')()
 		else
-			loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))(nil)
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	end
 })
@@ -7067,7 +7071,7 @@ general:CreateButton({
 		if shared.VapeDeveloper then
 			loadstring(readfile('newvape/loader.lua'), 'loader')()
 		else
-			loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))(nil)
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	end,
 	Tooltip = 'This will set your profile to the default settings of Vape'
@@ -7084,9 +7088,9 @@ general:CreateButton({
 	Function = function()
 		shared.vapereload = true
 		if shared.VapeDeveloper then
-			loadstring(readfile('newvape/init.lua'), 'init')()
+			loadstring(readfile('newvape/loader.lua'), 'loader')()
 		else
-			loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))(nil)
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	end,
 	Tooltip = 'Reloads vape for debugging purposes'
@@ -8088,7 +8092,7 @@ function mainapi:UpdateGUI(hue, sat, val, default)
 		mainapi.Legit.Icon.ImageColor3 = Color3.fromHSV(hue, sat, val)
 	end
 
-	if mainapi.PublicConfigs.Window then
+	if mainapi.PublicConfigs and mainapi.PublicConfigs.Window then
 		for _, v in mainapi.PublicConfigs.Backgrounds do
 			v.BackgroundColor3 = Color3.fromHSV(hue, sat, val)
 		end
