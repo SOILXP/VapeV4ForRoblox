@@ -3001,12 +3001,12 @@ function mainapi:CreateGUI()
 
 		local favoritesButton = Instance.new('ImageButton')
 		favoritesButton.Name = 'FavoritesButton'
-		favoritesButton.Size = UDim2.fromOffset(20, 20)
-		favoritesButton.Position = UDim2.new(1, -51, 0, 9)
+		favoritesButton.Size = UDim2.fromOffset(21, 21)
+		favoritesButton.Position = UDim2.new(1, -52, 0, 8)
 		favoritesButton.BackgroundTransparency = 1
 		favoritesButton.AutoButtonColor = false
 		favoritesButton.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
-		favoritesButton.ImageColor3 = Color3.fromRGB(118, 118, 126)
+		favoritesButton.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		favoritesButton.Parent = bar
 		addTooltip(favoritesButton, 'Open favorites')
 
@@ -4195,16 +4195,18 @@ function mainapi:CreateCategory(categorysettings)
 		dots.Image = getcustomasset('newvape/assets/new/dots.png')
 		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		dots.Parent = dotsbutton
-		local favoritebutton = Instance.new('ImageButton')
+		local favoritebutton = Instance.new('TextButton')
 		favoritebutton.Name = 'Favorite'
-		favoritebutton.Size = UDim2.fromOffset(18, 18)
-		favoritebutton.Position = UDim2.new(1, -60, 0, 11)
+		favoritebutton.Size = UDim2.fromOffset(20, 21)
+		favoritebutton.Position = UDim2.new(1, -60, 0, 9)
 		favoritebutton.AnchorPoint = Vector2.new(1, 0)
 		favoritebutton.BackgroundTransparency = 1
 		favoritebutton.AutoButtonColor = false
 		favoritebutton.Visible = false
-		favoritebutton.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
-		favoritebutton.ImageColor3 = Color3.fromRGB(118, 118, 126)
+		favoritebutton.Text = '★'
+		favoritebutton.TextSize = 18
+		favoritebutton.FontFace = uipallet.FontSemiBold
+		favoritebutton.TextColor3 = color.Light(uipallet.Main, 0.37)
 		favoritebutton.Parent = modulebutton
 		addTooltip(favoritebutton, 'Add to favorites')
 
@@ -4330,7 +4332,7 @@ function mainapi:CreateCategory(categorysettings)
 			modulebutton.Text = editing and self.EditHiddenText or self.NormalText
 			dotsbutton.Visible = not editing
 			bind.Visible = (not editing) and (#self.Bind > 0 or hovered or modulechildren.Visible)
-			favoritebutton.Visible = (not editing) and (hovered or modulechildren.Visible)
+			favoritebutton.Visible = (not editing) and modulechildren.Visible
 			pinbutton.Visible = mainapi:IsPinningEnabled() and (not editing) and (self.Pinned or hovered or modulechildren.Visible)
 			self:UpdateHiddenBox()
 			self:UpdatePinVisual()
@@ -4358,7 +4360,7 @@ function mainapi:CreateCategory(categorysettings)
 		end
 
 		local function updateFavoriteVisibility()
-			favoritebutton.Visible = (not (mainapi.Hidden and mainapi.Hidden.Editing)) and (hovered or modulechildren.Visible)
+			favoritebutton.Visible = (not (mainapi.Hidden and mainapi.Hidden.Editing)) and modulechildren.Visible
 			updatePinVisibility()
 		end
 
@@ -4775,7 +4777,7 @@ function mainapi:AnimateStarColor(star, active, hover)
 		if active then
 			targetColor = Color3.new(1, 1, 1)
 		else
-			targetColor = hover and Color3.fromRGB(185, 185, 195) or Color3.fromRGB(118, 118, 126)
+			targetColor = hover and color.Dark(uipallet.Text, 0.16) or color.Light(uipallet.Main, 0.37)
 		end
 
 		tween:Tween(star, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -4785,7 +4787,7 @@ function mainapi:AnimateStarColor(star, active, hover)
 		return
 	end
 
-	local target = active and Color3.fromRGB(255, 170, 42) or (hover and Color3.fromRGB(185, 185, 195) or Color3.fromRGB(118, 118, 126))
+	local target = active and Color3.fromRGB(255, 170, 42) or (hover and color.Dark(uipallet.Text, 0.16) or color.Light(uipallet.Main, 0.37))
 	tween:Tween(star, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		TextColor3 = target
 	})
@@ -4873,14 +4875,9 @@ function mainapi:UpdateFavoriteRow(name)
 		end
 	end
 	row.Dots.Visible = not editingHidden
-	row.Favorite.Visible = not editingHidden
 	row.BindPreview.Visible = (not editingHidden) and row.BindPreview.Visible
 	row.TextColor3 = moduleapi.Enabled and uipallet.Text or color.Dark(uipallet.Text, 0.16)
 	row.BackgroundColor3 = moduleapi.Enabled and color.Light(uipallet.Main, 0.02) or uipallet.Main
-	local star = row:FindFirstChild('Favorite')
-	if star then
-		self:AnimateStarColor(star, true, star:GetAttribute('Hovering') == true)
-	end
 end
 
 function mainapi:CreateFavoriteRow(moduleapi)
@@ -4928,18 +4925,6 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	hiddenboxfill.Parent = hiddenbox
 	addTooltip(hiddenbox, 'Show / hide module')
 
-	local star = Instance.new('ImageButton')
-	star.Name = 'Favorite'
-	star.Size = UDim2.fromOffset(18, 18)
-	star.Position = UDim2.new(1, -28, 0, 11)
-	star.AnchorPoint = Vector2.new(1, 0)
-	star.BackgroundTransparency = 1
-	star.AutoButtonColor = false
-	star.Image = getcustomasset('newvape/assets/new/favoriteon.png')
-	star.ImageColor3 = Color3.new(1, 1, 1)
-	star.Parent = row
-	addTooltip(star, 'Remove from favorites')
-
 	local bind = Instance.new('TextButton')
 	bind.Name = 'BindPreview'
 	bind.Size = UDim2.fromOffset(20, 21)
@@ -4952,17 +4937,49 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	bind.Visible = false
 	bind.Text = ''
 	bind.Parent = row
+	addTooltip(bind, 'Click to bind')
 	addCorner(bind, UDim.new(0, 4))
 
+	local bindicon = Instance.new('ImageLabel')
+	bindicon.Name = 'Icon'
+	bindicon.Size = UDim2.fromOffset(12, 12)
+	bindicon.Position = UDim2.new(0.5, -6, 0, 5)
+	bindicon.BackgroundTransparency = 1
+	bindicon.Image = getcustomasset('newvape/assets/new/bind.png')
+	bindicon.ImageColor3 = color.Dark(uipallet.Text, 0.43)
+	bindicon.Parent = bind
+
 	local bindtext = Instance.new('TextLabel')
+	bindtext.Name = 'Text'
 	bindtext.Size = UDim2.fromScale(1, 1)
 	bindtext.Position = UDim2.fromOffset(0, 1)
 	bindtext.BackgroundTransparency = 1
+	bindtext.Visible = false
 	bindtext.Text = ''
 	bindtext.TextColor3 = color.Dark(uipallet.Text, 0.43)
 	bindtext.TextSize = 12
 	bindtext.FontFace = uipallet.Font
 	bindtext.Parent = bind
+
+	local bindcover = Instance.new('ImageLabel')
+	bindcover.Name = 'Cover'
+	bindcover.Size = UDim2.fromOffset(154, 40)
+	bindcover.BackgroundTransparency = 1
+	bindcover.Visible = false
+	bindcover.Image = getcustomasset('newvape/assets/new/bindbkg.png')
+	bindcover.ScaleType = Enum.ScaleType.Slice
+	bindcover.SliceCenter = Rect.new(0, 0, 141, 40)
+	bindcover.Parent = row
+
+	local bindcovertext = Instance.new('TextLabel')
+	bindcovertext.Name = 'Text'
+	bindcovertext.Size = UDim2.new(1, -10, 1, -3)
+	bindcovertext.BackgroundTransparency = 1
+	bindcovertext.Text = 'PRESS A KEY TO BIND'
+	bindcovertext.TextColor3 = uipallet.Text
+	bindcovertext.TextSize = 11
+	bindcovertext.FontFace = uipallet.Font
+	bindcovertext.Parent = bindcover
 
 	local dotsbutton = Instance.new('TextButton')
 	dotsbutton.Name = 'Dots'
@@ -4980,90 +4997,123 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 	dots.Parent = dotsbutton
 
+	local rowHovered = false
+	local bindClickGuard = false
+
 	local function updateBindPreview()
 		if self.Hidden and self.Hidden.Editing then
 			bind.Visible = false
 			return
 		end
+
 		local bindValue = moduleapi.Bind or {}
-		if type(bindValue) == 'table' and #bindValue > 0 then
-			bind.Visible = true
+		local hasBind = type(bindValue) == 'table' and #bindValue > 0
+		bind.Visible = rowHovered or hasBind or (moduleapi.Children and moduleapi.Children.Visible)
+
+		if hasBind then
+			bindtext.Visible = true
+			bindicon.Visible = false
 			bindtext.Text = table.concat(bindValue, ' + '):upper()
 			bind.Size = UDim2.fromOffset(math.max(getfontsize(bindtext.Text, bindtext.TextSize, bindtext.Font).X + 10, 20), 21)
 		else
-			bind.Visible = false
+			bindtext.Visible = false
+			bindicon.Visible = true
+			bindicon.Image = getcustomasset('newvape/assets/new/bind.png')
+			bindicon.ImageColor3 = color.Dark(uipallet.Text, 0.43)
+			bind.Size = UDim2.fromOffset(20, 21)
 		end
 	end
 
-	local rowStarClickGuard = false
-	star.MouseButton1Down:Connect(function()
-		rowStarClickGuard = true
-	end)
-
 	row.MouseEnter:Connect(function()
+		rowHovered = true
 		if not moduleapi.Enabled then
 			row.TextColor3 = uipallet.Text
 			row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
 		end
 		dots.ImageColor3 = uipallet.Text
-		tween:Tween(star, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Position = UDim2.new(1, -58, 0, 11)
-		})
 		updateBindPreview()
 	end)
+
 	row.MouseLeave:Connect(function()
+		rowHovered = false
 		if not moduleapi.Enabled then
 			row.TextColor3 = color.Dark(uipallet.Text, 0.16)
 			row.BackgroundColor3 = uipallet.Main
 		end
 		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
-		bind.Visible = false
-		tween:Tween(star, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Position = UDim2.new(1, -28, 0, 11)
-		})
+		updateBindPreview()
 	end)
+
 	row.MouseButton1Click:Connect(function()
 		if self.Hidden and self.Hidden.Editing then return end
-		if rowStarClickGuard then
-			rowStarClickGuard = false
+		if bindClickGuard then
+			bindClickGuard = false
 			return
 		end
 		moduleapi:Toggle()
 		self:UpdateFavoriteRow(moduleapi.Name)
 	end)
+
 	row.MouseButton2Click:Connect(function()
 		if self.Hidden and self.Hidden.Editing then return end
 		if moduleapi.SetChildrenVisible then
 			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
 		end
+		updateBindPreview()
 	end)
+
 	dotsbutton.MouseButton1Click:Connect(function()
 		if self.Hidden and self.Hidden.Editing then return end
 		if moduleapi.SetChildrenVisible then
 			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
 		end
+		updateBindPreview()
 	end)
-	star.MouseEnter:Connect(function()
-		star:SetAttribute('Hovering', true)
-		self:AnimateStarColor(star, true, true)
+
+	bind.MouseEnter:Connect(function()
+		bindtext.Visible = false
+		bindicon.Visible = true
+		bindicon.Image = getcustomasset('newvape/assets/new/edit.png')
+		bindicon.ImageColor3 = color.Dark(uipallet.Text, 0.16)
 	end)
-	star.MouseLeave:Connect(function()
-		star:SetAttribute('Hovering', false)
-		self:AnimateStarColor(star, true, false)
+
+	bind.MouseLeave:Connect(function()
+		updateBindPreview()
 	end)
-	star.MouseButton1Click:Connect(function()
-		self:PulseStar(star)
-		self:SetFavorite(moduleapi.Name, false)
-		rowStarClickGuard = false
+
+	bind.MouseButton1Down:Connect(function()
+		bindClickGuard = true
 	end)
+
+	bind.MouseButton1Click:Connect(function()
+		if self.Hidden and self.Hidden.Editing then return end
+		bindcovertext.Text = 'PRESS A KEY TO BIND'
+		bindcover.Size = UDim2.fromOffset(getfontsize(bindcovertext.Text, bindcovertext.TextSize).X + 20, 40)
+		bindcover.Visible = true
+		mainapi.Binding = {
+			Bind = moduleapi.Bind,
+			SetBind = function(_, tab, mouse)
+				moduleapi:SetBind(tab, mouse)
+				updateBindPreview()
+				bindcovertext.Text = #tab <= 0 and 'BIND REMOVED' or 'BOUND TO'
+				bindcover.Size = UDim2.fromOffset(getfontsize(bindcovertext.Text, bindcovertext.TextSize).X + 20, 40)
+				task.delay(1, function()
+					if bindcover and bindcover.Parent then
+						bindcover.Visible = false
+					end
+				end)
+			end
+		}
+	end)
+
 	hiddenbox.MouseButton1Click:Connect(function()
 		self:SetHidden(moduleapi.Name, not self:IsHidden(moduleapi.Name))
 	end)
 
 	self.Favorites.Rows[moduleapi.Name] = row
+	updateBindPreview()
 	self:UpdateFavoriteRow(moduleapi.Name)
 end
-
 function mainapi:RefreshFavorites()
 	if not self.Favorites then return end
 	self.Favorites.List = self.Favorites.List or {}
