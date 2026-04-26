@@ -1782,7 +1782,7 @@ components = {
 		icon.AnchorPoint = Vector2.new(0.5, 0.5)
 		icon.BackgroundTransparency = 1
 		icon.Image = optionsettings.Icon
-		icon.ImageColor3 = color.Light(uipallet.Main, 0.37)
+		icon.ImageColor3 = Color3.new(1, 1, 1)
 		icon.Parent = bkg
 		optionsettings.Function = optionsettings.Function or function() end
 		local tooltipicon
@@ -3006,7 +3006,7 @@ function mainapi:CreateGUI()
 		favoritesButton.BackgroundTransparency = 1
 		favoritesButton.AutoButtonColor = false
 		favoritesButton.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
-		favoritesButton.ImageColor3 = color.Light(uipallet.Main, 0.37)
+		favoritesButton.ImageColor3 = Color3.new(1, 1, 1)
 		favoritesButton.Parent = bar
 		addTooltip(favoritesButton, 'Open favorites')
 
@@ -4778,7 +4778,8 @@ function mainapi:AnimateStarColor(star, active, hover)
 		if active then
 			targetColor = Color3.new(1, 1, 1)
 		else
-			targetColor = hover and color.Dark(uipallet.Text, 0.16) or color.Light(uipallet.Main, 0.37)
+			-- favoriteoff.png already carries the correct gray, so do not multiply it darker.
+			targetColor = Color3.new(1, 1, 1)
 		end
 
 		tween:Tween(star, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
