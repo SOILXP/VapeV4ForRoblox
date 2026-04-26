@@ -2,6 +2,7 @@ local mainapi = {
 	Categories = {},
 	Indicators = {},
 	Favorites = {List = {}, Rows = {}},
+	Hidden = {List = {}, Editing = false},
 	GUIColor = {
 		Hue = 0.46,
 		Sat = 0.96,
@@ -3905,6 +3906,78 @@ function mainapi:CreateCategory(categorysettings)
 	arrow.ImageColor3 = Color3.fromRGB(140, 140, 140)
 	arrow.Rotation = 180
 	arrow.Parent = arrowbutton
+
+	local hiddenHeaderHover = false
+	local hiddenEditButton = Instance.new('TextButton')
+	hiddenEditButton.Name = 'EditHiddenModules'
+	hiddenEditButton.Size = UDim2.fromOffset(32, 40)
+	hiddenEditButton.Position = UDim2.new(1, -70, 0, 0)
+	hiddenEditButton.BackgroundTransparency = 1
+	hiddenEditButton.AutoButtonColor = false
+	hiddenEditButton.Visible = false
+	hiddenEditButton.Text = ''
+	hiddenEditButton.Parent = window
+	addTooltip(hiddenEditButton, 'Edit Hidden modules')
+	local hiddenEditIcon = Instance.new('ImageLabel')
+	hiddenEditIcon.Name = 'Icon'
+	hiddenEditIcon.Size = UDim2.fromOffset(13, 13)
+	hiddenEditIcon.Position = UDim2.fromOffset(9, 14)
+	hiddenEditIcon.BackgroundTransparency = 1
+	hiddenEditIcon.Image = getcustomasset('newvape/assets/new/edit.png')
+	hiddenEditIcon.ImageColor3 = color.Light(uipallet.Main, 0.37)
+	hiddenEditIcon.Parent = hiddenEditButton
+
+	local hiddenDoneButton = Instance.new('TextButton')
+	hiddenDoneButton.Name = 'DoneHiddenModules'
+	hiddenDoneButton.Size = UDim2.fromOffset(58, 40)
+	hiddenDoneButton.Position = UDim2.new(1, -95, 0, 0)
+	hiddenDoneButton.BackgroundTransparency = 1
+	hiddenDoneButton.AutoButtonColor = false
+	hiddenDoneButton.Visible = false
+	hiddenDoneButton.Text = 'DONE'
+	hiddenDoneButton.TextColor3 = color.Dark(uipallet.Text, 0.16)
+	hiddenDoneButton.TextSize = 12
+	hiddenDoneButton.FontFace = uipallet.Font
+	hiddenDoneButton.Parent = window
+	addTooltip(hiddenDoneButton, 'Finish editing hidden modules')
+
+	local hiddenCountFrame = Instance.new('Frame')
+	hiddenCountFrame.Name = 'HiddenCount'
+	hiddenCountFrame.Size = UDim2.fromOffset(48, 40)
+	hiddenCountFrame.Position = UDim2.new(1, -87, 0, 0)
+	hiddenCountFrame.BackgroundTransparency = 1
+	hiddenCountFrame.Visible = false
+	hiddenCountFrame.Parent = window
+	addTooltip(hiddenCountFrame, 'Shows hidden modules')
+	local hiddenCountText = Instance.new('TextLabel')
+	hiddenCountText.Name = 'Count'
+	hiddenCountText.Size = UDim2.fromOffset(15, 40)
+	hiddenCountText.Position = UDim2.fromOffset(1, 0)
+	hiddenCountText.BackgroundTransparency = 1
+	hiddenCountText.Text = '0'
+	hiddenCountText.TextColor3 = color.Light(uipallet.Main, 0.37)
+	hiddenCountText.TextSize = 13
+	hiddenCountText.FontFace = uipallet.Font
+	hiddenCountText.Parent = hiddenCountFrame
+	local hiddenEye = Instance.new('TextLabel')
+	hiddenEye.Name = 'Eye'
+	hiddenEye.Size = UDim2.fromOffset(18, 18)
+	hiddenEye.Position = UDim2.fromOffset(16, 11)
+	hiddenEye.BackgroundTransparency = 1
+	hiddenEye.Text = '◉'
+	hiddenEye.TextColor3 = color.Light(uipallet.Main, 0.37)
+	hiddenEye.TextSize = 16
+	hiddenEye.FontFace = uipallet.FontSemiBold
+	hiddenEye.Parent = hiddenCountFrame
+	local hiddenSlash = Instance.new('Frame')
+	hiddenSlash.Name = 'Slash'
+	hiddenSlash.Size = UDim2.fromOffset(22, 2)
+	hiddenSlash.Position = UDim2.fromOffset(14, 20)
+	hiddenSlash.BackgroundColor3 = color.Light(uipallet.Main, 0.37)
+	hiddenSlash.BorderSizePixel = 0
+	hiddenSlash.Rotation = -38
+	hiddenSlash.Parent = hiddenCountFrame
+
 	local children = Instance.new('ScrollingFrame')
 	children.Name = 'Children'
 	children.Size = UDim2.new(1, 0, 1, -41)
@@ -4119,6 +4192,24 @@ function mainapi:CreateCategory(categorysettings)
 		favoritebutton.TextColor3 = color.Dark(uipallet.Text, 0.43)
 		favoritebutton.Parent = modulebutton
 		addTooltip(favoritebutton, 'Add to favorites')
+
+		local hiddenbox = Instance.new('TextButton')
+		hiddenbox.Name = 'HiddenBox'
+		hiddenbox.Size = UDim2.fromOffset(14, 14)
+		hiddenbox.Position = UDim2.fromOffset(21, 13)
+		hiddenbox.BackgroundColor3 = uipallet.Main
+		hiddenbox.BackgroundTransparency = 1
+		hiddenbox.BorderSizePixel = 0
+		hiddenbox.AutoButtonColor = false
+		hiddenbox.Visible = false
+		hiddenbox.Text = ''
+		hiddenbox.Parent = modulebutton
+		local hiddenboxstroke = Instance.new('UIStroke')
+		hiddenboxstroke.Thickness = 1
+		hiddenboxstroke.Color = color.Light(uipallet.Main, 0.14)
+		hiddenboxstroke.Parent = hiddenbox
+		addTooltip(hiddenbox, 'Show / hide module')
+
 		modulechildren.Name = modulesettings.Name..'Children'
 		modulechildren.Size = UDim2.new(1, 0, 0, 0)
 		modulechildren.BackgroundColor3 = color.Dark(uipallet.Main, 0.02)
@@ -4143,17 +4234,51 @@ function mainapi:CreateCategory(categorysettings)
 		addMaid(moduleapi)
 		moduleapi.Favorited = mainapi:IsFavorite(modulesettings.Name)
 		moduleapi.FavoriteStar = favoritebutton
+		moduleapi.HiddenBox = hiddenbox
+		moduleapi.HiddenBoxStroke = hiddenboxstroke
+		moduleapi.NormalText = modulebutton.Text
+		moduleapi.EditHiddenText = '                  '..({modulesettings.Name:gsub(' ', '')})[1]
+
+		function moduleapi:UpdateHiddenBox()
+			local hidden = mainapi:IsHidden(self.Name)
+			local accent = mainapi:GetHiddenAccentColor(self)
+			hiddenboxstroke.Color = hidden and color.Light(uipallet.Main, 0.14) or accent
+			hiddenbox.BackgroundColor3 = hidden and color.Dark(uipallet.Main, 0.04) or accent
+			hiddenbox.BackgroundTransparency = hidden and 0.96 or 0.86
+		end
+
+		function moduleapi:ApplyHiddenState()
+			local editing = mainapi.Hidden and mainapi.Hidden.Editing
+			local hidden = mainapi:IsHidden(self.Name)
+			modulebutton.Visible = editing or not hidden
+			if hidden and not editing then
+				modulechildren.Visible = false
+				bind.Visible = false
+				favoritebutton.Visible = false
+			end
+			hiddenbox.Visible = editing
+			modulebutton.Text = editing and self.EditHiddenText or self.NormalText
+			dotsbutton.Visible = not editing
+			bind.Visible = (not editing) and (#self.Bind > 0 or hovered or modulechildren.Visible)
+			favoritebutton.Visible = (not editing) and (hovered or modulechildren.Visible)
+			self:UpdateHiddenBox()
+		end
 
 		function moduleapi:UpdateFavoriteVisual()
 			favoritebutton.TextColor3 = self.Favorited and Color3.fromRGB(255, 170, 42) or color.Dark(uipallet.Text, 0.43)
 		end
 		moduleapi:UpdateFavoriteVisual()
+		moduleapi:ApplyHiddenState()
 
 		local function updateFavoriteVisibility()
-			favoritebutton.Visible = hovered or modulechildren.Visible
+			favoritebutton.Visible = (not (mainapi.Hidden and mainapi.Hidden.Editing)) and (hovered or modulechildren.Visible)
 		end
 
 		local function setModuleChildrenVisible(state)
+			if mainapi.Hidden and mainapi.Hidden.Editing then
+				modulechildren.Visible = false
+				return
+			end
 			modulechildren.Visible = state
 			if state then
 				modulechildren.BackgroundTransparency = 1
@@ -4221,6 +4346,7 @@ function mainapi:CreateCategory(categorysettings)
 				mainapi:UpdateTextGUI()
 			end
 			mainapi:UpdateFavoriteRow(self.Name)
+			if self.ApplyHiddenState then self:ApplyHiddenState() end
 			if disabled then return end
 			task.spawn(modulesettings.Function, self.Enabled)
 		end
@@ -4244,6 +4370,10 @@ function mainapi:CreateCategory(categorysettings)
 		favoritebutton.MouseButton1Click:Connect(function()
 			mainapi:SetFavorite(moduleapi.Name, not moduleapi.Favorited)
 			favoriteClickGuard = false
+		end)
+
+		hiddenbox.MouseButton1Click:Connect(function()
+			mainapi:SetHidden(moduleapi.Name, not mainapi:IsHidden(moduleapi.Name))
 		end)
 
 		bind.MouseEnter:Connect(function()
@@ -4277,9 +4407,11 @@ function mainapi:CreateCategory(categorysettings)
 			end
 		end)
 		dotsbutton.MouseButton1Click:Connect(function()
+			if mainapi.Hidden and mainapi.Hidden.Editing then return end
 			setModuleChildrenVisible(not modulechildren.Visible)
 		end)
 		dotsbutton.MouseButton2Click:Connect(function()
+			if mainapi.Hidden and mainapi.Hidden.Editing then return end
 			setModuleChildrenVisible(not modulechildren.Visible)
 		end)
 		modulebutton.MouseEnter:Connect(function()
@@ -4295,6 +4427,7 @@ function mainapi:CreateCategory(categorysettings)
 			end
 			bind.Visible = #moduleapi.Bind > 0 or hovered or modulechildren.Visible
 			updateFavoriteVisibility()
+			if mainapi.Hidden and mainapi.Hidden.Editing then moduleapi:ApplyHiddenState() end
 		end)
 		modulebutton.MouseLeave:Connect(function()
 			hovered = false
@@ -4309,8 +4442,10 @@ function mainapi:CreateCategory(categorysettings)
 			end
 			bind.Visible = #moduleapi.Bind > 0 or hovered or modulechildren.Visible
 			updateFavoriteVisibility()
+			if mainapi.Hidden and mainapi.Hidden.Editing then moduleapi:ApplyHiddenState() end
 		end)
 		modulebutton.MouseButton1Click:Connect(function()
+			if mainapi.Hidden and mainapi.Hidden.Editing then return end
 			if favoriteClickGuard then
 				favoriteClickGuard = false
 				return
@@ -4318,6 +4453,7 @@ function mainapi:CreateCategory(categorysettings)
 			moduleapi:Toggle()
 		end)
 		modulebutton.MouseButton2Click:Connect(function()
+			if mainapi.Hidden and mainapi.Hidden.Editing then return end
 			setModuleChildrenVisible(not modulechildren.Visible)
 		end)
 		if inputService.TouchEnabled then
@@ -4398,6 +4534,20 @@ function mainapi:CreateCategory(categorysettings)
 		return moduleapi
 	end
 
+	function categoryapi:UpdateHiddenHeader()
+		local editing = mainapi.Hidden and mainapi.Hidden.Editing
+		local hiddenCount = mainapi:GetHiddenCategoryCount(categorysettings.Name)
+		hiddenDoneButton.Visible = editing
+		hiddenEditButton.Visible = (not editing) and hiddenHeaderHover
+		hiddenCountFrame.Visible = (not editing) and (not hiddenHeaderHover) and hiddenCount > 0
+		hiddenCountText.Text = tostring(hiddenCount)
+	end
+
+	function categoryapi:SetHiddenHeaderHover(state)
+		hiddenHeaderHover = state
+		self:UpdateHiddenHeader()
+	end
+
 	function categoryapi:Expand()
 		self.Expanded = not self.Expanded
 		children.Visible = self.Expanded
@@ -4407,6 +4557,32 @@ function mainapi:CreateCategory(categorysettings)
 		divider.Visible = children.CanvasPosition.Y > 10 and children.Visible
 		mainapi:QueueSave(0.35)
 	end
+
+	hiddenEditButton.MouseEnter:Connect(function()
+		hiddenEditIcon.ImageColor3 = uipallet.Text
+	end)
+	hiddenEditButton.MouseLeave:Connect(function()
+		hiddenEditIcon.ImageColor3 = color.Light(uipallet.Main, 0.37)
+	end)
+	hiddenEditButton.MouseButton1Click:Connect(function()
+		mainapi:SetHiddenEditing(true)
+	end)
+	hiddenDoneButton.MouseEnter:Connect(function()
+		hiddenDoneButton.TextColor3 = uipallet.Text
+	end)
+	hiddenDoneButton.MouseLeave:Connect(function()
+		hiddenDoneButton.TextColor3 = color.Dark(uipallet.Text, 0.16)
+	end)
+	hiddenDoneButton.MouseButton1Click:Connect(function()
+		mainapi:SetHiddenEditing(false)
+	end)
+	window.MouseEnter:Connect(function()
+		categoryapi:SetHiddenHeaderHover(true)
+	end)
+	window.MouseLeave:Connect(function()
+		categoryapi:SetHiddenHeaderHover(false)
+	end)
+	categoryapi:UpdateHiddenHeader()
 
 	arrowbutton.MouseButton1Click:Connect(function()
 		categoryapi:Expand()
@@ -4492,6 +4668,22 @@ function mainapi:UpdateFavoriteRow(name)
 	local row = self.Favorites.Rows[name]
 	local moduleapi = self.Modules[name]
 	if not row or not moduleapi then return end
+	local editingHidden = self.Hidden and self.Hidden.Editing
+	local hidden = self:IsHidden(name)
+	row.Visible = editingHidden or not hidden
+	row.Text = editingHidden and ('                  '..moduleapi.Name:gsub(' ', '')) or ('            '..moduleapi.Name:gsub(' ', ''))
+	local hiddenbox = row:FindFirstChild('HiddenBox')
+	if hiddenbox then
+		hiddenbox.Visible = editingHidden
+		local stroke = hiddenbox:FindFirstChildOfClass('UIStroke')
+		local accent = self:GetHiddenAccentColor(moduleapi)
+		if stroke then stroke.Color = hidden and color.Light(uipallet.Main, 0.14) or accent end
+		hiddenbox.BackgroundColor3 = hidden and color.Dark(uipallet.Main, 0.04) or accent
+		hiddenbox.BackgroundTransparency = hidden and 0.96 or 0.86
+	end
+	row.Dots.Visible = not editingHidden
+	row.Favorite.Visible = not editingHidden
+	row.BindPreview.Visible = (not editingHidden) and row.BindPreview.Visible
 	row.TextColor3 = moduleapi.Enabled and uipallet.Text or color.Dark(uipallet.Text, 0.16)
 	row.BackgroundColor3 = moduleapi.Enabled and color.Light(uipallet.Main, 0.02) or uipallet.Main
 	local star = row:FindFirstChild('Favorite')
@@ -4519,6 +4711,23 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	row.FontFace = uipallet.Font
 	row.Parent = fav.Children
 	addTooltip(row, 'Favorite: '..moduleapi.Name)
+
+	local hiddenbox = Instance.new('TextButton')
+	hiddenbox.Name = 'HiddenBox'
+	hiddenbox.Size = UDim2.fromOffset(14, 14)
+	hiddenbox.Position = UDim2.fromOffset(21, 13)
+	hiddenbox.BackgroundColor3 = uipallet.Main
+	hiddenbox.BackgroundTransparency = 1
+	hiddenbox.BorderSizePixel = 0
+	hiddenbox.AutoButtonColor = false
+	hiddenbox.Visible = false
+	hiddenbox.Text = ''
+	hiddenbox.Parent = row
+	local hiddenboxstroke = Instance.new('UIStroke')
+	hiddenboxstroke.Thickness = 1
+	hiddenboxstroke.Color = color.Light(uipallet.Main, 0.14)
+	hiddenboxstroke.Parent = hiddenbox
+	addTooltip(hiddenbox, 'Show / hide module')
 
 	local star = Instance.new('TextButton')
 	star.Name = 'Favorite'
@@ -4575,6 +4784,10 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	dots.Parent = dotsbutton
 
 	local function updateBindPreview()
+		if self.Hidden and self.Hidden.Editing then
+			bind.Visible = false
+			return
+		end
 		local bindValue = moduleapi.Bind or {}
 		if type(bindValue) == 'table' and #bindValue > 0 then
 			bind.Visible = true
@@ -4607,6 +4820,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 		bind.Visible = false
 	end)
 	row.MouseButton1Click:Connect(function()
+		if self.Hidden and self.Hidden.Editing then return end
 		if rowStarClickGuard then
 			rowStarClickGuard = false
 			return
@@ -4615,11 +4829,13 @@ function mainapi:CreateFavoriteRow(moduleapi)
 		self:UpdateFavoriteRow(moduleapi.Name)
 	end)
 	row.MouseButton2Click:Connect(function()
+		if self.Hidden and self.Hidden.Editing then return end
 		if moduleapi.SetChildrenVisible then
 			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
 		end
 	end)
 	dotsbutton.MouseButton1Click:Connect(function()
+		if self.Hidden and self.Hidden.Editing then return end
 		if moduleapi.SetChildrenVisible then
 			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
 		end
@@ -4627,6 +4843,9 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	star.MouseButton1Click:Connect(function()
 		self:SetFavorite(moduleapi.Name, false)
 		rowStarClickGuard = false
+	end)
+	hiddenbox.MouseButton1Click:Connect(function()
+		self:SetHidden(moduleapi.Name, not self:IsHidden(moduleapi.Name))
 	end)
 
 	self.Favorites.Rows[moduleapi.Name] = row
@@ -4678,6 +4897,99 @@ function mainapi:SetFavorite(name, state, skipSave)
 	end
 
 	self:RefreshFavorites()
+	if not skipSave then
+		self:QueueSave(0.35)
+	end
+end
+
+function mainapi:IsHidden(name)
+	return self.Hidden and self.Hidden.List and table.find(self.Hidden.List, name) ~= nil
+end
+
+function mainapi:GetHiddenAccentColor(moduleapi)
+	local hue, sat, val = self.GUIColor.Hue, self.GUIColor.Sat, self.GUIColor.Value
+	local rainbow = self.GUIColor.Rainbow and self.RainbowMode and self.RainbowMode.Value ~= 'Retro'
+	if rainbow then
+		return Color3.fromHSV(self:Color((hue - (((moduleapi and moduleapi.Index) or 1) * 0.025)) % 1))
+	end
+	return Color3.fromHSV(hue, sat, val)
+end
+
+function mainapi:GetHiddenCategoryCount(category)
+	local count = 0
+	for _, moduleapi in self.Modules do
+		if moduleapi.Category == category and self:IsHidden(moduleapi.Name) then
+			count += 1
+		end
+	end
+	return count
+end
+
+function mainapi:UpdateHiddenHeaders()
+	for _, categoryapi in self.Categories do
+		if type(categoryapi) == 'table' and categoryapi.UpdateHiddenHeader then
+			categoryapi:UpdateHiddenHeader()
+		end
+	end
+end
+
+function mainapi:UpdateHiddenModule(name)
+	local moduleapi = self.Modules[name]
+	if moduleapi and moduleapi.ApplyHiddenState then
+		moduleapi:ApplyHiddenState()
+	end
+	if self.Favorites and self.Favorites.Rows and self.Favorites.Rows[name] then
+		self:UpdateFavoriteRow(name)
+	end
+end
+
+function mainapi:RefreshHiddenModules()
+	self.Hidden = self.Hidden or {List = {}, Editing = false}
+	self.Hidden.List = self.Hidden.List or {}
+	for i = #self.Hidden.List, 1, -1 do
+		if not self.Modules[self.Hidden.List[i]] then
+			table.remove(self.Hidden.List, i)
+		end
+	end
+	for _, moduleapi in self.Modules do
+		if moduleapi.ApplyHiddenState then
+			moduleapi:ApplyHiddenState()
+		end
+	end
+	if self.Favorites and self.Favorites.Rows then
+		for name in self.Favorites.Rows do
+			self:UpdateFavoriteRow(name)
+		end
+	end
+	self:UpdateHiddenHeaders()
+end
+
+function mainapi:SetHiddenEditing(state)
+	self.Hidden = self.Hidden or {List = {}, Editing = false}
+	self.Hidden.Editing = state and true or false
+	if self.Hidden.Editing then
+		for _, moduleapi in self.Modules do
+			if moduleapi.SetChildrenVisible then
+				moduleapi:SetChildrenVisible(false)
+			elseif moduleapi.Children then
+				moduleapi.Children.Visible = false
+			end
+		end
+	end
+	self:RefreshHiddenModules()
+end
+
+function mainapi:SetHidden(name, state, skipSave)
+	self.Hidden = self.Hidden or {List = {}, Editing = false}
+	self.Hidden.List = self.Hidden.List or {}
+	local ind = table.find(self.Hidden.List, name)
+	if state and not ind then
+		table.insert(self.Hidden.List, name)
+	elseif not state and ind then
+		table.remove(self.Hidden.List, ind)
+	end
+	self:UpdateHiddenModule(name)
+	self:UpdateHiddenHeaders()
 	if not skipSave then
 		self:QueueSave(0.35)
 	end
@@ -6995,6 +7307,11 @@ function mainapi:Load(skipgui, profile, profiledata)
 			self:RefreshFavorites()
 		end
 
+		self.Hidden = self.Hidden or {List = {}, Editing = false}
+		self.Hidden.List = savedata.Hidden or self.Hidden.List or {}
+		self.Hidden.Editing = false
+		self:RefreshHiddenModules()
+
 		if savedata.Legit then
 			for i, v in savedata.Legit do
 				local object = self.Legit.Modules[i]
@@ -7122,7 +7439,8 @@ function mainapi:Save(newprofile)
 		Modules = {},
 		Categories = {},
 		Legit = {},
-		Favorites = self.Favorites and self.Favorites.List or {}
+		Favorites = self.Favorites and self.Favorites.List or {},
+		Hidden = self.Hidden and self.Hidden.List or {}
 	}
 
 	for i, v in self.Categories do
@@ -8537,6 +8855,10 @@ function mainapi:UpdateGUI(hue, sat, val, default)
 			v.BackgroundColor3 = rainbow and Color3.fromHSV(mainapi:Color((hue - (button.Index * 0.025)) % 1)) or button.Enabled and Color3.new(1, 1, 1) or Color3.fromHSV(hue, sat, val)
 			v.BackgroundTransparency = (rainbow or not button.Enabled) and 0 or 0.85
 			v:FindFirstChild('Text').TextColor3 = mainapi.GUIColor.Rainbow and Color3.new(0.19, 0.19, 0.19) or mainapi:TextColor(hue, sat, val)
+		end
+
+		if button.UpdateHiddenBox then
+			button:UpdateHiddenBox()
 		end
 
 		for _, option in button.Options do
