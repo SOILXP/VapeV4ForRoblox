@@ -4762,9 +4762,6 @@ function mainapi:IsFavorite(name)
 end
 
 function mainapi:GetFavoriteStarAsset(active)
-	if active then
-		return getcustomasset('newvape/assets/new/favoriteon.png')
-	end
 	return getcustomasset('newvape/assets/new/favoriteoff.png')
 end
 
@@ -4772,11 +4769,12 @@ function mainapi:AnimateStarColor(star, active, hover)
 	if not star then return end
 
 	if star:IsA('ImageButton') or star:IsA('ImageLabel') then
+		-- Always use the off-star mask so the icon never disappears if favoriteon.png is missing.
 		star.Image = self:GetFavoriteStarAsset(active)
 
 		local targetColor
 		if active then
-			targetColor = Color3.new(1, 1, 1)
+			targetColor = Color3.fromRGB(255, 170, 42)
 		else
 			-- favoriteoff.png already carries the correct gray, so do not multiply it darker.
 			targetColor = Color3.new(1, 1, 1)
