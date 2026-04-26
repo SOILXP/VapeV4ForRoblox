@@ -1,6 +1,7 @@
 local mainapi = {
 	Categories = {},
 	Indicators = {},
+	Favorites = {List = {}, Rows = {}},
 	GUIColor = {
 		Hue = 0.46,
 		Sat = 0.96,
@@ -2913,14 +2914,14 @@ function mainapi:CreateGUI()
 		button.MouseEnter:Connect(function()
 			if not optionapi.Enabled then
 				button.TextColor3 = uipallet.Text
-				if buttonicon then buttonicon.ImageColor3 = uipallet.Text end
+				if icon then icon.ImageColor3 = uipallet.Text end
 				button.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
 			end
 		end)
 		button.MouseLeave:Connect(function()
 			if not optionapi.Enabled then
 				button.TextColor3 = color.Dark(uipallet.Text, 0.16)
-				if buttonicon then buttonicon.ImageColor3 = color.Dark(uipallet.Text, 0.16) end
+				if icon then icon.ImageColor3 = color.Dark(uipallet.Text, 0.16) end
 				button.BackgroundColor3 = uipallet.Main
 			end
 		end)
@@ -2935,6 +2936,48 @@ function mainapi:CreateGUI()
 
 	function categoryapi:CreateDivider(text)
 		return components.Divider(children, text)
+	end
+
+	function categoryapi:CreateFavoritesBar()
+		local bar = Instance.new('Frame')
+		bar.Name = 'FavoritesBar'
+		bar.Size = UDim2.fromOffset(220, 36)
+		bar.BackgroundColor3 = uipallet.Main
+		bar.BorderSizePixel = 0
+		bar.Parent = children
+
+		local button = Instance.new('TextButton')
+		button.Name = 'FavoritesButton'
+		button.Size = UDim2.fromOffset(32, 32)
+		button.Position = UDim2.fromOffset(12, 2)
+		button.BackgroundTransparency = 1
+		button.AutoButtonColor = false
+		button.Text = '★'
+		button.TextSize = 22
+		button.FontFace = uipallet.FontSemiBold
+		button.TextColor3 = color.Light(uipallet.Main, 0.37)
+		button.Parent = bar
+		addTooltip(button, 'Open favorites')
+
+		button.MouseEnter:Connect(function()
+			button.TextColor3 = Color3.fromRGB(255, 170, 42)
+		end)
+		button.MouseLeave:Connect(function()
+			mainapi:UpdateFavoritesButton()
+		end)
+		button.MouseButton1Click:Connect(function()
+			local fav = mainapi.Categories.Favorites
+			if not fav or not fav.Button then return end
+			fav.Button:Toggle()
+			if fav.Button.Enabled and not fav.Expanded then
+				fav:Expand()
+			end
+			mainapi:UpdateFavoritesButton()
+		end)
+
+		mainapi.Favorites.StarButton = button
+		mainapi:UpdateFavoritesButton()
+		return button
 	end
 
 	function categoryapi:CreateOverlayBar()
@@ -3791,6 +3834,8 @@ function mainapi:CreateGUI()
 		end
 	end)
 
+	categoryapi.Object = window
+	categoryapi.Children = children
 	self.Categories.Main = categoryapi
 
 	return categoryapi
@@ -3822,6 +3867,19 @@ function mainapi:CreateCategory(categorysettings)
 	icon.Image = categorysettings.Icon
 	icon.ImageColor3 = uipallet.Text
 	icon.Parent = window
+	if categorysettings.StarIcon then
+		icon.ImageTransparency = 1
+		local staricon = Instance.new('TextLabel')
+		staricon.Name = 'StarIcon'
+		staricon.Size = UDim2.fromScale(1, 1)
+		staricon.Position = UDim2.fromOffset(0, -3)
+		staricon.BackgroundTransparency = 1
+		staricon.Text = '★'
+		staricon.TextColor3 = uipallet.Text
+		staricon.TextSize = 19
+		staricon.FontFace = uipallet.FontSemiBold
+		staricon.Parent = icon
+	end
 	local title = Instance.new('TextLabel')
 	title.Name = 'Title'
 	title.Size = UDim2.new(1, -(categorysettings.Size.X.Offset > 18 and 40 or 33), 0, 41)
@@ -4049,6 +4107,20 @@ function mainapi:CreateCategory(categorysettings)
 		dots.Image = getcustomasset('newvape/assets/new/dots.png')
 		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		dots.Parent = dotsbutton
+		local favoritebutton = Instance.new('TextButton')
+		favoritebutton.Name = 'Favorite'
+		favoritebutton.Size = UDim2.fromOffset(24, 24)
+		favoritebutton.Position = UDim2.new(1, -62, 0, 8)
+		favoritebutton.AnchorPoint = Vector2.new(1, 0)
+		favoritebutton.BackgroundTransparency = 1
+		favoritebutton.AutoButtonColor = false
+		favoritebutton.Visible = false
+		favoritebutton.Text = '★'
+		favoritebutton.TextSize = 20
+		favoritebutton.FontFace = uipallet.FontSemiBold
+		favoritebutton.TextColor3 = color.Dark(uipallet.Text, 0.43)
+		favoritebutton.Parent = modulebutton
+		addTooltip(favoritebutton, 'Add to favorites')
 		modulechildren.Name = modulesettings.Name..'Children'
 		modulechildren.Size = UDim2.new(1, 0, 0, 0)
 		modulechildren.BackgroundColor3 = color.Dark(uipallet.Main, 0.02)
@@ -4071,6 +4143,17 @@ function mainapi:CreateCategory(categorysettings)
 		divider.Parent = modulebutton
 		modulesettings.Function = modulesettings.Function or function() end
 		addMaid(moduleapi)
+		moduleapi.Favorited = mainapi:IsFavorite(modulesettings.Name)
+		moduleapi.FavoriteStar = favoritebutton
+
+		function moduleapi:UpdateFavoriteVisual()
+			favoritebutton.TextColor3 = self.Favorited and Color3.fromRGB(255, 170, 42) or color.Dark(uipallet.Text, 0.43)
+		end
+		moduleapi:UpdateFavoriteVisual()
+
+		local function updateFavoriteVisibility()
+			favoritebutton.Visible = hovered or modulechildren.Visible
+		end
 
 		local function setModuleChildrenVisible(state)
 			modulechildren.Visible = state
@@ -4079,8 +4162,10 @@ function mainapi:CreateCategory(categorysettings)
 				tween:Tween(modulechildren, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0})
 			end
 			bind.Visible = #moduleapi.Bind > 0 or hovered or modulechildren.Visible
+			updateFavoriteVisibility()
 			mainapi:QueueSave(0.4)
 		end
+		moduleapi.SetChildrenVisible = setModuleChildrenVisible
 
 		function moduleapi:SetBind(tab, mouse)
 			if tab.Mobile then
@@ -4108,6 +4193,7 @@ function mainapi:CreateCategory(categorysettings)
 				bindtext.Text = table.concat(tab, ' + '):upper()
 				bind.Size = UDim2.fromOffset(math.max(getfontsize(bindtext.Text, bindtext.TextSize, bindtext.Font).X + 10, 20), 21)
 			end
+			mainapi:UpdateFavoriteRow(self.Name)
 		end
 
 		function moduleapi:Toggle(multiple)
@@ -4136,6 +4222,7 @@ function mainapi:CreateCategory(categorysettings)
 			if not multiple then
 				mainapi:UpdateTextGUI()
 			end
+			mainapi:UpdateFavoriteRow(self.Name)
 			if disabled then return end
 			task.spawn(modulesettings.Function, self.Enabled)
 		end
@@ -4145,6 +4232,21 @@ function mainapi:CreateCategory(categorysettings)
 				return v(optionsettings, modulechildren, moduleapi)
 			end
 		end
+
+		local favoriteClickGuard = false
+		favoritebutton.MouseButton1Down:Connect(function()
+			favoriteClickGuard = true
+		end)
+		favoritebutton.MouseEnter:Connect(function()
+			favoritebutton.TextColor3 = Color3.fromRGB(255, 190, 70)
+		end)
+		favoritebutton.MouseLeave:Connect(function()
+			moduleapi:UpdateFavoriteVisual()
+		end)
+		favoritebutton.MouseButton1Click:Connect(function()
+			mainapi:SetFavorite(moduleapi.Name, not moduleapi.Favorited)
+			favoriteClickGuard = false
+		end)
 
 		bind.MouseEnter:Connect(function()
 			bindtext.Visible = false
@@ -4194,6 +4296,7 @@ function mainapi:CreateCategory(categorysettings)
 				modulebutton.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
 			end
 			bind.Visible = #moduleapi.Bind > 0 or hovered or modulechildren.Visible
+			updateFavoriteVisibility()
 		end)
 		modulebutton.MouseLeave:Connect(function()
 			hovered = false
@@ -4207,8 +4310,13 @@ function mainapi:CreateCategory(categorysettings)
 				modulebutton.BackgroundColor3 = uipallet.Main
 			end
 			bind.Visible = #moduleapi.Bind > 0 or hovered or modulechildren.Visible
+			updateFavoriteVisibility()
 		end)
 		modulebutton.MouseButton1Click:Connect(function()
+			if favoriteClickGuard then
+				favoriteClickGuard = false
+				return
+			end
 			moduleapi:Toggle()
 		end)
 		modulebutton.MouseButton2Click:Connect(function()
@@ -4337,17 +4445,255 @@ function mainapi:CreateCategory(categorysettings)
 		end
 	end)
 
-	categoryapi.Button = self.Categories.Main:CreateButton({
-		Name = categorysettings.Name,
-		Icon = categorysettings.Icon,
-		Size = categorysettings.Size,
-		Window = window
-	})
-
 	categoryapi.Object = window
+	categoryapi.Children = children
+	categoryapi.ListLayout = windowlist
+
+	if categorysettings.HiddenButton then
+		categoryapi.Button = {
+			Enabled = false,
+			Toggle = function(buttonapi)
+				buttonapi.Enabled = not buttonapi.Enabled
+				window.Visible = buttonapi.Enabled
+				if not buttonapi.Enabled then
+					divider.Visible = false
+				end
+			end
+		}
+	else
+		categoryapi.Button = self.Categories.Main:CreateButton({
+			Name = categorysettings.Name,
+			Icon = categorysettings.Icon,
+			Size = categorysettings.Size,
+			Window = window
+		})
+	end
+
 	self.Categories[categorysettings.Name] = categoryapi
 
 	return categoryapi
+end
+
+
+function mainapi:IsFavorite(name)
+	return self.Favorites and self.Favorites.List and table.find(self.Favorites.List, name) ~= nil
+end
+
+function mainapi:UpdateFavoritesButton()
+	if not self.Favorites or not self.Favorites.StarButton then return end
+	local fav = self.Categories and self.Categories.Favorites
+	local hasFavorites = self.Favorites.List and #self.Favorites.List > 0
+	local open = fav and fav.Button and fav.Button.Enabled
+	self.Favorites.StarButton.TextColor3 = (hasFavorites or open) and Color3.fromRGB(255, 170, 42) or color.Light(uipallet.Main, 0.37)
+end
+
+function mainapi:UpdateFavoriteRow(name)
+	if not self.Favorites or not self.Favorites.Rows then return end
+	local row = self.Favorites.Rows[name]
+	local moduleapi = self.Modules[name]
+	if not row or not moduleapi then return end
+	row.TextColor3 = moduleapi.Enabled and uipallet.Text or color.Dark(uipallet.Text, 0.16)
+	row.BackgroundColor3 = moduleapi.Enabled and color.Light(uipallet.Main, 0.02) or uipallet.Main
+	local star = row:FindFirstChild('Favorite')
+	if star then
+		star.TextColor3 = Color3.fromRGB(255, 170, 42)
+	end
+end
+
+function mainapi:CreateFavoriteRow(moduleapi)
+	local fav = self.Categories and self.Categories.Favorites
+	if not fav or not fav.Children or not moduleapi then return end
+	self.Favorites.Rows = self.Favorites.Rows or {}
+	if self.Favorites.Rows[moduleapi.Name] then return end
+
+	local row = Instance.new('TextButton')
+	row.Name = moduleapi.Name
+	row.Size = UDim2.fromOffset(220, 40)
+	row.BackgroundColor3 = uipallet.Main
+	row.BorderSizePixel = 0
+	row.AutoButtonColor = false
+	row.Text = '            '..moduleapi.Name:gsub(' ', '')
+	row.TextXAlignment = Enum.TextXAlignment.Left
+	row.TextColor3 = color.Dark(uipallet.Text, 0.16)
+	row.TextSize = 14
+	row.FontFace = uipallet.Font
+	row.Parent = fav.Children
+	addTooltip(row, 'Favorite: '..moduleapi.Name)
+
+	local star = Instance.new('TextButton')
+	star.Name = 'Favorite'
+	star.Size = UDim2.fromOffset(24, 24)
+	star.Position = UDim2.new(1, -62, 0, 8)
+	star.AnchorPoint = Vector2.new(1, 0)
+	star.BackgroundTransparency = 1
+	star.AutoButtonColor = false
+	star.Text = '★'
+	star.TextSize = 20
+	star.FontFace = uipallet.FontSemiBold
+	star.TextColor3 = Color3.fromRGB(255, 170, 42)
+	star.Parent = row
+	addTooltip(star, 'Remove from favorites')
+
+	local bind = Instance.new('TextButton')
+	bind.Name = 'BindPreview'
+	bind.Size = UDim2.fromOffset(20, 21)
+	bind.Position = UDim2.new(1, -36, 0, 9)
+	bind.AnchorPoint = Vector2.new(1, 0)
+	bind.BackgroundColor3 = Color3.new(1, 1, 1)
+	bind.BackgroundTransparency = 0.92
+	bind.BorderSizePixel = 0
+	bind.AutoButtonColor = false
+	bind.Visible = false
+	bind.Text = ''
+	bind.Parent = row
+	addCorner(bind, UDim.new(0, 4))
+
+	local bindtext = Instance.new('TextLabel')
+	bindtext.Size = UDim2.fromScale(1, 1)
+	bindtext.Position = UDim2.fromOffset(0, 1)
+	bindtext.BackgroundTransparency = 1
+	bindtext.Text = ''
+	bindtext.TextColor3 = color.Dark(uipallet.Text, 0.43)
+	bindtext.TextSize = 12
+	bindtext.FontFace = uipallet.Font
+	bindtext.Parent = bind
+
+	local dotsbutton = Instance.new('TextButton')
+	dotsbutton.Name = 'Dots'
+	dotsbutton.Size = UDim2.fromOffset(25, 40)
+	dotsbutton.Position = UDim2.new(1, -25, 0, 0)
+	dotsbutton.BackgroundTransparency = 1
+	dotsbutton.Text = ''
+	dotsbutton.Parent = row
+	local dots = Instance.new('ImageLabel')
+	dots.Name = 'Dots'
+	dots.Size = UDim2.fromOffset(3, 16)
+	dots.Position = UDim2.fromOffset(4, 12)
+	dots.BackgroundTransparency = 1
+	dots.Image = getcustomasset('newvape/assets/new/dots.png')
+	dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
+	dots.Parent = dotsbutton
+
+	local function updateBindPreview()
+		local bindValue = moduleapi.Bind or {}
+		if type(bindValue) == 'table' and #bindValue > 0 then
+			bind.Visible = true
+			bindtext.Text = table.concat(bindValue, ' + '):upper()
+			bind.Size = UDim2.fromOffset(math.max(getfontsize(bindtext.Text, bindtext.TextSize, bindtext.Font).X + 10, 20), 21)
+		else
+			bind.Visible = false
+		end
+	end
+
+	local rowStarClickGuard = false
+	star.MouseButton1Down:Connect(function()
+		rowStarClickGuard = true
+	end)
+
+	row.MouseEnter:Connect(function()
+		if not moduleapi.Enabled then
+			row.TextColor3 = uipallet.Text
+			row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
+		end
+		dots.ImageColor3 = uipallet.Text
+		updateBindPreview()
+	end)
+	row.MouseLeave:Connect(function()
+		if not moduleapi.Enabled then
+			row.TextColor3 = color.Dark(uipallet.Text, 0.16)
+			row.BackgroundColor3 = uipallet.Main
+		end
+		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
+		bind.Visible = false
+	end)
+	row.MouseButton1Click:Connect(function()
+		if rowStarClickGuard then
+			rowStarClickGuard = false
+			return
+		end
+		moduleapi:Toggle()
+		self:UpdateFavoriteRow(moduleapi.Name)
+	end)
+	row.MouseButton2Click:Connect(function()
+		if moduleapi.SetChildrenVisible then
+			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
+		end
+	end)
+	dotsbutton.MouseButton1Click:Connect(function()
+		if moduleapi.SetChildrenVisible then
+			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
+		end
+	end)
+	star.MouseButton1Click:Connect(function()
+		self:SetFavorite(moduleapi.Name, false)
+		rowStarClickGuard = false
+	end)
+
+	self.Favorites.Rows[moduleapi.Name] = row
+	self:UpdateFavoriteRow(moduleapi.Name)
+end
+
+function mainapi:RefreshFavorites()
+	if not self.Favorites then return end
+	self.Favorites.List = self.Favorites.List or {}
+	self.Favorites.Rows = self.Favorites.Rows or {}
+
+	for name, row in self.Favorites.Rows do
+		if not table.find(self.Favorites.List, name) or not self.Modules[name] then
+			row:Destroy()
+			self.Favorites.Rows[name] = nil
+		end
+	end
+
+	table.sort(self.Favorites.List)
+	for order, name in self.Favorites.List do
+		local moduleapi = self.Modules[name]
+		if moduleapi then
+			self:CreateFavoriteRow(moduleapi)
+			if self.Favorites.Rows[name] then
+				self.Favorites.Rows[name].LayoutOrder = order
+			end
+		end
+	end
+
+	local fav = self.Categories and self.Categories.Favorites
+	if fav then
+		if #self.Favorites.List > 0 then
+			if not fav.Button.Enabled then
+				fav.Button:Toggle()
+			end
+			if not fav.Expanded then
+				fav:Expand()
+			end
+		elseif fav.Button.Enabled then
+			fav.Button:Toggle()
+		end
+	end
+	self:UpdateFavoritesButton()
+end
+
+function mainapi:SetFavorite(name, state, skipSave)
+	if not self.Favorites then return end
+	self.Favorites.List = self.Favorites.List or {}
+	local ind = table.find(self.Favorites.List, name)
+	if state and not ind then
+		table.insert(self.Favorites.List, name)
+	elseif not state and ind then
+		table.remove(self.Favorites.List, ind)
+	end
+
+	local moduleapi = self.Modules[name]
+	if moduleapi then
+		moduleapi.Favorited = table.find(self.Favorites.List, name) ~= nil
+		if moduleapi.UpdateFavoriteVisual then
+			moduleapi:UpdateFavoriteVisual()
+		end
+	end
+
+	self:RefreshFavorites()
+	if not skipSave then
+		self:QueueSave(0.35)
+	end
 end
 
 function mainapi:CreateOverlay(categorysettings)
@@ -6562,11 +6908,11 @@ function mainapi:Load(skipgui, profile, profiledata)
 			self.Keybind = guidata.Keybind
 			for i, v in guidata.Categories do
 				local object = self.Categories[i]
-				if not object then continue end
+				if not object or object.Alias then continue end
 				if object.Options and v.Options then
 					self:LoadOptions(object, v.Options)
 				end
-				if v.Enabled then
+				if v.Enabled and object.Button then
 					object.Button:Toggle()
 				end
 				if v.Pinned then
@@ -6608,7 +6954,7 @@ function mainapi:Load(skipgui, profile, profiledata)
 		if savedata.Categories then
 			for i, v in savedata.Categories do
 				local object = self.Categories[i]
-				if not object then continue end
+				if not object or object.Alias then continue end
 				if object.Options and v.Options then
 					self:LoadOptions(object, v.Options)
 				end
@@ -6646,6 +6992,20 @@ function mainapi:Load(skipgui, profile, profiledata)
 				object:SetBind(v.Bind)
 				object.Object.Bind.Visible = #v.Bind > 0
 			end
+		end
+
+		if savedata.Favorites then
+			self.Favorites.List = savedata.Favorites or {}
+			for name, moduleapi in self.Modules do
+				moduleapi.Favorited = table.find(self.Favorites.List, name) ~= nil
+				if moduleapi.UpdateFavoriteVisual then
+					moduleapi:UpdateFavoriteVisual()
+				end
+			end
+			self:RefreshFavorites()
+		else
+			self.Favorites.List = self.Favorites.List or {}
+			self:RefreshFavorites()
 		end
 
 		if savedata.Legit then
@@ -6774,10 +7134,12 @@ function mainapi:Save(newprofile)
 	local savedata = {
 		Modules = {},
 		Categories = {},
-		Legit = {}
+		Legit = {},
+		Favorites = self.Favorites and self.Favorites.List or {}
 	}
 
 	for i, v in self.Categories do
+		if v.Alias then continue end
 		(v.Type ~= 'Category' and i ~= 'Main' and savedata or guidata).Categories[i] = {
 			Enabled = i ~= 'Main' and v.Button.Enabled or nil,
 			Expanded = v.Type ~= 'Overlay' and v.Expanded or nil,
@@ -7021,15 +7383,18 @@ mainapi:CreateCategory({
 	Icon = getcustomasset('newvape/assets/new/inventoryicon.png'),
 	Size = UDim2.fromOffset(15, 14)
 })
+mainapi.Categories.Kits = setmetatable({Alias = true}, {__index = mainapi.Categories.Inventory})
 mainapi:CreateCategory({
 	Name = 'Minigames',
 	Icon = getcustomasset('newvape/assets/new/miniicon.png'),
 	Size = UDim2.fromOffset(19, 12)
 })
 mainapi:CreateCategory({
-	Name = 'Kits',
-	Icon = getcustomasset('newvape/assets/new/friendstab.png'),
-	Size = UDim2.fromOffset(15, 15)
+	Name = 'Favorites',
+	Icon = '',
+	Size = UDim2.fromOffset(17, 17),
+	HiddenButton = true,
+	StarIcon = true
 })
 mainapi.Categories.Main:CreateDivider('misc')
 
@@ -7153,6 +7518,7 @@ mainapi:Clean(targets.Update)
 mainapi:CreateLegit()
 mainapi:CreateProfileGUI()
 mainapi:CreateSearch()
+mainapi.Categories.Main:CreateFavoritesBar()
 mainapi.Categories.Main:CreateOverlayBar()
 mainapi.Categories.Main:CreateSettingsDivider()
 
