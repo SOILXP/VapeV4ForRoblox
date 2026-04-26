@@ -3900,7 +3900,7 @@ function mainapi:CreateCategory(categorysettings)
 	icon.ImageColor3 = uipallet.Text
 	icon.Parent = window
 	if categorysettings.StarIcon then
-		icon.Position = UDim2.fromOffset(14, 10)
+		icon.Position = UDim2.fromOffset(13, 9)
 		icon.ImageTransparency = 0
 		icon.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
 		icon.ImageColor3 = uipallet.Text
@@ -8058,7 +8058,7 @@ mainapi:CreateCategory({
 mainapi:CreateCategory({
 	Name = 'Favorites',
 	Icon = '',
-	Size = UDim2.fromOffset(21, 21),
+	Size = UDim2.fromOffset(24, 24),
 	HiddenButton = true,
 	StarIcon = true
 })
