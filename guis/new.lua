@@ -3900,10 +3900,10 @@ function mainapi:CreateCategory(categorysettings)
 	icon.ImageColor3 = uipallet.Text
 	icon.Parent = window
 	if categorysettings.StarIcon then
-		icon.Position = UDim2.fromOffset(13, 9)
+		icon.Position = UDim2.fromOffset(12, 8)
 		icon.ImageTransparency = 0
 		icon.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
-		icon.ImageColor3 = uipallet.Text
+		icon.ImageColor3 = color.Dark(uipallet.Text, 0.16)
 	end
 	local title = Instance.new('TextLabel')
 	title.Name = 'Title'
@@ -8058,7 +8058,7 @@ mainapi:CreateCategory({
 mainapi:CreateCategory({
 	Name = 'Favorites',
 	Icon = '',
-	Size = UDim2.fromOffset(24, 24),
+	Size = UDim2.fromOffset(25, 25),
 	HiddenButton = true,
 	StarIcon = true
 })
