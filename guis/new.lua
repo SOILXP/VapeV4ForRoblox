@@ -3903,7 +3903,7 @@ function mainapi:CreateCategory(categorysettings)
 		icon.Position = UDim2.fromOffset(12, 8)
 		icon.ImageTransparency = 0
 		icon.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
-		icon.ImageColor3 = Color3.new(1, 1, 1)
+		icon.ImageColor3 = uipallet.Text
 	end
 	local title = Instance.new('TextLabel')
 	title.Name = 'Title'
