@@ -66,7 +66,6 @@ local getcustomassets = {
 	['newvape/assets/new/add.png'] = 'rbxassetid://14368300605',
 	['newvape/assets/new/alert.png'] = 'rbxassetid://14368301329',
 	['newvape/assets/new/allowedicon.png'] = 'rbxassetid://14368302000',
-	['newvape/assets/new/mascot.png'] = 'rbxassetid://14373395239', -- Cat-only name remapped to original Vape icon
 	['newvape/assets/new/allowedtab.png'] = 'rbxassetid://14368302875',
 	['newvape/assets/new/arrowmodule.png'] = 'rbxassetid://14473354880',
 	['newvape/assets/new/back.png'] = 'rbxassetid://14368303894',
@@ -77,7 +76,6 @@ local getcustomassets = {
 	['newvape/assets/new/blockedtab.png'] = 'rbxassetid://14385672881',
 	['newvape/assets/new/blur.png'] = 'rbxassetid://14898786664',
 	['newvape/assets/new/blurnotif.png'] = 'rbxassetid://16738720137',
-	['newvape/assets/new/catv5.png'] = 'rbxassetid://14373395239', -- Cat-only name remapped to original Vape icon
 	['newvape/assets/new/close.png'] = 'rbxassetid://14368309446',
 	['newvape/assets/new/closemini.png'] = 'rbxassetid://14368310467',
 	['newvape/assets/new/colorpreview.png'] = 'rbxassetid://14368311578',
@@ -115,7 +113,6 @@ local getcustomassets = {
 	['newvape/assets/new/rendericon.png'] = 'rbxassetid://14368350193',
 	['newvape/assets/new/rendertab.png'] = 'rbxassetid://14397373458',
 	['newvape/assets/new/search.png'] = 'rbxassetid://14425646684',
-	['newvape/assets/new/spotify.png'] = '', -- optional CatV6 extra; downloaded only if a future UI uses it
 	['newvape/assets/new/targetinfoicon.png'] = 'rbxassetid://14368354234',
 	['newvape/assets/new/targetnpc1.png'] = 'rbxassetid://14497400332',
 	['newvape/assets/new/targetnpc2.png'] = 'rbxassetid://14497402744',
@@ -342,19 +339,8 @@ local function createMobileButton(buttonapi, position)
 end
 
 local function downloadFile(path, func)
-	-- Original Vape is the default source. CatV6 is only a fallback for truly extra
-	-- image filenames that are not present in the original assets/new folder.
 	local originalPath = path
 	local sourcePath = path
-
-	local remapToOriginal = {
-		['newvape/assets/new/mascot.png'] = 'newvape/assets/new/vape.png',
-		['newvape/assets/new/catv5.png'] = 'newvape/assets/new/vape.png'
-	}
-
-	if remapToOriginal[sourcePath] then
-		sourcePath = remapToOriginal[sourcePath]
-	end
 
 	if not isfile(originalPath) then
 		createDownloader(originalPath)
@@ -362,15 +348,6 @@ local function downloadFile(path, func)
 		local suc, res = pcall(function()
 			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, sourcePath:gsub('newvape/', '')), true)
 		end)
-
-		-- Optional support for CatV6-only extra image filenames. This never overrides
-		-- original Vape images like friendstab.png, vape.png, etc.
-		local extraAssetFile = originalPath:match('^newvape/assets/new/(spotify%.png)$')
-		if (not suc or res == '404: Not Found' or res == nil or res == '') and extraAssetFile then
-			suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/MaxlaserTech/CatV6/main/assets/new/'..extraAssetFile, true)
-			end)
-		end
 
 		-- Do not hard-crash the whole UI over a missing image.
 		if not suc or res == '404: Not Found' or res == nil or res == '' then
@@ -427,38 +404,111 @@ local function loadJson(path)
 	return suc and type(res) == 'table' and res or nil
 end
 
+local saveDebounce = 0
+function mainapi:QueueSave(delayTime)
+	if not self.Loaded then return end
+	saveDebounce += 1
+	local ticket = saveDebounce
+	task.delay(delayTime or 0.45, function()
+		if ticket == saveDebounce and mainapi.Loaded then
+			pcall(function()
+				mainapi:Save()
+			end)
+		end
+	end)
+end
+
+function mainapi:MoveObject(object, position, instant)
+	if not object then return end
+	if instant or not self.Loaded or not object.Visible then
+		object.Position = position
+		return
+	end
+
+	tween:Tween(object, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Position = position
+	})
+end
+
 local function makeDraggable(gui, window)
+	local dragging = false
+	local targetPosition
+	local currentPosition
+	local dragOffset
+	local changed
+	local ended
+	local renderConnection
+	local DRAG_SMOOTHNESS = 0.22
+	local RELEASE_SMOOTHNESS = 0.35
+	local SNAP_DISTANCE = 0.35
+
+	local function disconnectInput()
+		if changed then
+			changed:Disconnect()
+			changed = nil
+		end
+		if ended then
+			ended:Disconnect()
+			ended = nil
+		end
+	end
+
+	local function startRenderLoop()
+		if renderConnection then return end
+		renderConnection = runService.RenderStepped:Connect(function(dt)
+			if not gui.Parent then
+				renderConnection:Disconnect()
+				renderConnection = nil
+				return
+			end
+			if not currentPosition or not targetPosition then return end
+
+			local smoothness = dragging and DRAG_SMOOTHNESS or RELEASE_SMOOTHNESS
+			local alpha = 1 - math.pow(1 - smoothness, dt * 60)
+			currentPosition = currentPosition:Lerp(targetPosition, alpha)
+			gui.Position = UDim2.fromOffset(currentPosition.X, currentPosition.Y)
+
+			if not dragging and (currentPosition - targetPosition).Magnitude <= SNAP_DISTANCE then
+				currentPosition = targetPosition
+				gui.Position = UDim2.fromOffset(targetPosition.X, targetPosition.Y)
+				if renderConnection then
+					renderConnection:Disconnect()
+					renderConnection = nil
+				end
+			end
+		end)
+	end
+
 	gui.InputBegan:Connect(function(inputObj)
 		if window and not window.Visible then return end
-		if
-			(inputObj.UserInputType == Enum.UserInputType.MouseButton1 or inputObj.UserInputType == Enum.UserInputType.Touch)
-			and (inputObj.Position.Y - gui.AbsolutePosition.Y < 40 or window)
-		then
-			local dragPosition = Vector2.new(
+		local validInput = inputObj.UserInputType == Enum.UserInputType.MouseButton1 or inputObj.UserInputType == Enum.UserInputType.Touch
+		local validDragArea = (inputObj.Position.Y - gui.AbsolutePosition.Y < 40) or window
+		if validInput and validDragArea then
+			dragging = true
+			dragOffset = Vector2.new(
 				gui.AbsolutePosition.X - inputObj.Position.X,
 				gui.AbsolutePosition.Y - inputObj.Position.Y + guiService:GetGuiInset().Y
 			) / scale.Scale
+			currentPosition = Vector2.new(gui.Position.X.Offset, gui.Position.Y.Offset)
+			targetPosition = currentPosition
+			startRenderLoop()
 
-			local changed = inputService.InputChanged:Connect(function(input)
+			changed = inputService.InputChanged:Connect(function(input)
 				if input.UserInputType == (inputObj.UserInputType == Enum.UserInputType.MouseButton1 and Enum.UserInputType.MouseMovement or Enum.UserInputType.Touch) then
 					local position = input.Position
 					if inputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-						dragPosition = (dragPosition // 3) * 3
+						dragOffset = (dragOffset // 3) * 3
 						position = (position // 3) * 3
 					end
-					gui.Position = UDim2.fromOffset((position.X / scale.Scale) + dragPosition.X, (position.Y / scale.Scale) + dragPosition.Y)
+					targetPosition = (Vector2.new(position.X, position.Y) / scale.Scale) + dragOffset
 				end
 			end)
 
-			local ended
 			ended = inputObj.Changed:Connect(function()
 				if inputObj.UserInputState == Enum.UserInputState.End then
-					if changed then
-						changed:Disconnect()
-					end
-					if ended then
-						ended:Disconnect()
-					end
+					dragging = false
+					disconnectInput()
+					mainapi:QueueSave(0.5)
 				end
 			end)
 		end
@@ -476,6 +526,54 @@ end
 local function removeTags(str)
 	str = str:gsub('<br%s*/>', '\n')
 	return str:gsub('<[^<>]->', '')
+end
+
+local function getBadgeStyle(tag)
+	local clean = removeTags(tostring(tag)):upper()
+	local styles = {
+		NEW = {
+			Text = 'NEW',
+			Background = Color3.fromRGB(70, 170, 95),
+			TextColor = Color3.fromRGB(245, 255, 247)
+		},
+		BETA = {
+			Text = 'BETA',
+			Background = Color3.fromRGB(95, 135, 230),
+			TextColor = Color3.fromRGB(245, 248, 255)
+		},
+		PRIVATE = {
+			Text = 'PRIVATE',
+			Background = Color3.fromRGB(155, 95, 220),
+			TextColor = Color3.fromRGB(252, 246, 255)
+		},
+		RISKY = {
+			Text = 'RISKY',
+			Background = Color3.fromRGB(230, 110, 80),
+			TextColor = Color3.fromRGB(255, 246, 243)
+		},
+		UPDATED = {
+			Text = 'UPDATED',
+			Background = Color3.fromRGB(230, 170, 65),
+			TextColor = Color3.fromRGB(255, 250, 240)
+		},
+		MATCHED = {
+			Text = 'MATCHED',
+			Background = Color3.fromRGB(255, 255, 255),
+			TextColor = Color3.fromRGB(0, 0, 0)
+		}
+	}
+
+	for key, style in styles do
+		if clean == key or clean:find(key, 1, true) then
+			return style
+		end
+	end
+
+	return {
+		Text = clean,
+		Background = color.Light(uipallet.Main, 0.09),
+		TextColor = color.Dark(uipallet.Text, 0.05)
+	}
 end
 
 do
@@ -2645,7 +2743,7 @@ function mainapi:CreateGUI()
 	settingsversion.Size = UDim2.new(1, 0, 0, 16)
 	settingsversion.Position = UDim2.new(0, -6, 1, -16)
 	settingsversion.BackgroundTransparency = 1
-	settingsversion.Text = 'Kitty Vape v'..mainapi.Version
+	settingsversion.Text = 'Vape '..mainapi.Version..' '..(isfile('newvape/profiles/commit.txt') and readfile('newvape/profiles/commit.txt'):sub(1, 6) or '')..' '
 	settingsversion.TextColor3 = color.Dark(uipallet.Text, 0.43)
 	settingsversion.TextXAlignment = Enum.TextXAlignment.Right
 	settingsversion.TextSize = 10
@@ -2815,7 +2913,40 @@ function mainapi:CreateGUI()
 				icon.ImageColor3 = button.TextColor3
 			end
 			button.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
-			categorysettings.Window.Visible = self.Enabled
+
+			local categoryWindow = categorysettings.Window
+			if categoryWindow then
+				if self.Enabled then
+					local finalPosition = categoryWindow.Position
+					categoryWindow.Visible = true
+					categoryWindow.Position = UDim2.new(
+						finalPosition.X.Scale,
+						finalPosition.X.Offset - 18,
+						finalPosition.Y.Scale,
+						finalPosition.Y.Offset
+					)
+					tween:Tween(categoryWindow, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						Position = finalPosition
+					})
+				else
+					local finalPosition = categoryWindow.Position
+					tween:Tween(categoryWindow, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+						Position = UDim2.new(
+							finalPosition.X.Scale,
+							finalPosition.X.Offset + 18,
+							finalPosition.Y.Scale,
+							finalPosition.Y.Offset
+						)
+					})
+					task.delay(0.17, function()
+						if not self.Enabled and categoryWindow.Parent then
+							categoryWindow.Visible = false
+							categoryWindow.Position = finalPosition
+						end
+					end)
+				end
+			end
+			mainapi:QueueSave(0.35)
 		end
 
 		button.MouseEnter:Connect(function()
@@ -3846,7 +3977,8 @@ function mainapi:CreateCategory(categorysettings)
 		
 		if modulesettings.Tags and typeof(modulesettings.Tags) then
 			for i, tag in modulesettings.Tags do
-				tag = tag:upper()
+				local badgeStyle = getBadgeStyle(tag)
+				tag = badgeStyle.Text
 				if tag:find('PREM') then
 					table.insert(moduleapi.Alias, 'premium')
 				end
@@ -3855,15 +3987,16 @@ function mainapi:CreateCategory(categorysettings)
 				local indicator = Instance.new('TextLabel')
 				indicator.LayoutOrder = i - 1
 				indicator.Parent = indicatorholder
-				indicator.Size = UDim2.new(0, size.X + 4, 0, 21)
-				indicator.BackgroundColor3 = Color3.new(1, 1, 1)
+				indicator.Size = UDim2.new(0, size.X + 10, 0, 20)
+				indicator.BackgroundColor3 = badgeStyle.Background
+				indicator.BackgroundTransparency = 0.08
 				indicator.TextSize = 14
 				indicator.TextTransparency = 1
 				indicator.Text = tag
 				indicator.Name = tag
 				indicator.Position = UDim2.new()
-				indicator.TextColor3 = Color3.new(0, 0, 0)
-				indicator.FontFace = uipallet.Font
+				indicator.TextColor3 = badgeStyle.TextColor
+				indicator.FontFace = uipallet.FontSemiBold
 
 				addCorner(indicator, UDim.new(0, 5))
 
@@ -3874,8 +4007,10 @@ function mainapi:CreateCategory(categorysettings)
 				text.BackgroundTransparency = 1
 				text.Name = 'Text'
 				text.AnchorPoint = Vector2.new()
-				text.TextSize = 12
+				text.TextSize = 11
 				text.TextTransparency = 0
+				text.TextColor3 = badgeStyle.TextColor
+				text.FontFace = uipallet.FontSemiBold
 				table.insert(moduleapi.Tags, indicator)
 
 				indicator.Visible = tag ~= 'MATCHED'
@@ -3957,6 +4092,7 @@ function mainapi:CreateCategory(categorysettings)
 		modulechildren.Size = UDim2.new(1, 0, 0, 0)
 		modulechildren.BackgroundColor3 = color.Dark(uipallet.Main, 0.02)
 		modulechildren.BorderSizePixel = 0
+		modulechildren.ClipsDescendants = true
 		modulechildren.Visible = false
 		modulechildren.Parent = children
 		moduleapi.Children = modulechildren
@@ -3975,6 +4111,36 @@ function mainapi:CreateCategory(categorysettings)
 		divider.Parent = modulebutton
 		modulesettings.Function = modulesettings.Function or function() end
 		addMaid(moduleapi)
+
+		local moduleChildrenExpanded = false
+		local moduleChildrenTween
+		local function setModuleChildrenVisible(state)
+			if moduleChildrenExpanded == state then return end
+			moduleChildrenExpanded = state
+			if moduleChildrenTween then
+				pcall(function()
+					moduleChildrenTween:Cancel()
+				end)
+				moduleChildrenTween = nil
+			end
+
+			local targetHeight = state and (windowlist.AbsoluteContentSize.Y / scale.Scale) or 0
+			modulechildren.Visible = true
+			modulechildren.Size = UDim2.new(1, 0, 0, modulechildren.Size.Y.Offset)
+			moduleChildrenTween = tweenService:Create(modulechildren, TweenInfo.new(0.20, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = UDim2.new(1, 0, 0, targetHeight)
+			})
+			moduleChildrenTween.Completed:Once(function()
+				moduleChildrenTween = nil
+				modulechildren.Visible = moduleChildrenExpanded
+				if moduleChildrenExpanded then
+					modulechildren.Size = UDim2.new(1, 0, 0, windowlist.AbsoluteContentSize.Y / scale.Scale)
+				end
+			end)
+			moduleChildrenTween:Play()
+			bind.Visible = #moduleapi.Bind > 0 or hovered or state
+			mainapi:QueueSave(0.4)
+		end
 
 		function moduleapi:SetBind(tab, mouse)
 			if tab.Mobile then
@@ -4016,8 +4182,8 @@ function mainapi:CreateCategory(categorysettings)
 			self.Enabled = not self.Enabled
 			divider.Visible = self.Enabled
 			gradient.Enabled = self.Enabled
-			modulebutton.TextColor3 = (hovered or modulechildren.Visible) and uipallet.Text or color.Dark(uipallet.Text, 0.16)
-			modulebutton.BackgroundColor3 = (hovered or modulechildren.Visible) and color.Light(uipallet.Main, 0.02) or uipallet.Main
+			modulebutton.TextColor3 = (hovered or moduleChildrenExpanded) and uipallet.Text or color.Dark(uipallet.Text, 0.16)
+			modulebutton.BackgroundColor3 = (hovered or moduleChildrenExpanded) and color.Light(uipallet.Main, 0.02) or uipallet.Main
 			dots.ImageColor3 = self.Enabled and Color3.fromRGB(50, 50, 50) or color.Light(uipallet.Main, 0.37)
 			bindicon.ImageColor3 = color.Dark(uipallet.Text, 0.43)
 			bindtext.TextColor3 = color.Dark(uipallet.Text, 0.43)
@@ -4071,10 +4237,10 @@ function mainapi:CreateCategory(categorysettings)
 			end
 		end)
 		dotsbutton.MouseButton1Click:Connect(function()
-			modulechildren.Visible = not modulechildren.Visible
+			setModuleChildrenVisible(not moduleChildrenExpanded)
 		end)
 		dotsbutton.MouseButton2Click:Connect(function()
-			modulechildren.Visible = not modulechildren.Visible
+			setModuleChildrenVisible(not moduleChildrenExpanded)
 		end)
 		modulebutton.MouseEnter:Connect(function()
 			hovered = true
@@ -4083,11 +4249,11 @@ function mainapi:CreateCategory(categorysettings)
 					v.Visible = false
 				end
 			end
-			if not moduleapi.Enabled and not modulechildren.Visible then
+			if not moduleapi.Enabled and not moduleChildrenExpanded then
 				modulebutton.TextColor3 = uipallet.Text
 				modulebutton.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
 			end
-			bind.Visible = #moduleapi.Bind > 0 or hovered or modulechildren.Visible
+			bind.Visible = #moduleapi.Bind > 0 or hovered or moduleChildrenExpanded
 		end)
 		modulebutton.MouseLeave:Connect(function()
 			hovered = false
@@ -4096,17 +4262,17 @@ function mainapi:CreateCategory(categorysettings)
 					v.Visible = true
 				end
 			end
-			if not moduleapi.Enabled and not modulechildren.Visible then
+			if not moduleapi.Enabled and not moduleChildrenExpanded then
 				modulebutton.TextColor3 = color.Dark(uipallet.Text, 0.16)
 				modulebutton.BackgroundColor3 = uipallet.Main
 			end
-			bind.Visible = #moduleapi.Bind > 0 or hovered or modulechildren.Visible
+			bind.Visible = #moduleapi.Bind > 0 or hovered or moduleChildrenExpanded
 		end)
 		modulebutton.MouseButton1Click:Connect(function()
 			moduleapi:Toggle()
 		end)
 		modulebutton.MouseButton2Click:Connect(function()
-			modulechildren.Visible = not modulechildren.Visible
+			setModuleChildrenVisible(not moduleChildrenExpanded)
 		end)
 		if inputService.TouchEnabled then
 			local heldbutton = false
@@ -4157,7 +4323,13 @@ function mainapi:CreateCategory(categorysettings)
 			if mainapi.ThreadFix then
 				setthreadidentity(8)
 			end
-			modulechildren.Size = UDim2.new(1, 0, 0, windowlist.AbsoluteContentSize.Y / scale.Scale)
+			if moduleChildrenExpanded then
+				tween:Tween(modulechildren, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.new(1, 0, 0, windowlist.AbsoluteContentSize.Y / scale.Scale)
+				})
+			else
+				modulechildren.Size = UDim2.new(1, 0, 0, 0)
+			end
 		end)
 
 		moduleapi.Object = modulebutton
@@ -4188,10 +4360,21 @@ function mainapi:CreateCategory(categorysettings)
 
 	function categoryapi:Expand()
 		self.Expanded = not self.Expanded
-		children.Visible = self.Expanded
+		children.Visible = true
 		arrow.Rotation = self.Expanded and 0 or 180
-		window.Size = UDim2.fromOffset(220, self.Expanded and math.min(41 + windowlist.AbsoluteContentSize.Y / scale.Scale, 601) or 41)
-		divider.Visible = children.CanvasPosition.Y > 10 and children.Visible
+		local targetSize = UDim2.fromOffset(220, self.Expanded and math.min(41 + windowlist.AbsoluteContentSize.Y / scale.Scale, 601) or 41)
+		tween:Tween(window, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = targetSize
+		})
+		if not self.Expanded then
+			task.delay(0.19, function()
+				if not categoryapi.Expanded then
+					children.Visible = false
+				end
+			end)
+		end
+		divider.Visible = children.CanvasPosition.Y > 10 and self.Expanded
+		mainapi:QueueSave(0.35)
 	end
 
 	arrowbutton.MouseButton1Click:Connect(function()
@@ -4223,7 +4406,9 @@ function mainapi:CreateCategory(categorysettings)
 		end
 		children.CanvasSize = UDim2.fromOffset(0, windowlist.AbsoluteContentSize.Y / scale.Scale)
 		if categoryapi.Expanded then
-			window.Size = UDim2.fromOffset(220, math.min(41 + windowlist.AbsoluteContentSize.Y / scale.Scale, 601))
+			tween:Tween(window, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = UDim2.fromOffset(220, math.min(41 + windowlist.AbsoluteContentSize.Y / scale.Scale, 601))
+			})
 		end
 	end)
 
@@ -6471,7 +6656,7 @@ function mainapi:Load(skipgui, profile, profiledata)
 					object:ChangeValue()
 				end
 				if v.Position then
-					object.Object.Position = UDim2.fromOffset(v.Position.X, v.Position.Y)
+					self:MoveObject(object.Object, UDim2.fromOffset(v.Position.X, v.Position.Y), not skipgui)
 				end
 			end
 		end
@@ -6516,7 +6701,7 @@ function mainapi:Load(skipgui, profile, profiledata)
 					object.ListEnabled = v.ListEnabled or {}
 					object:ChangeValue()
 				end
-				object.Object.Position = UDim2.fromOffset(v.Position.X, v.Position.Y)
+				self:MoveObject(object.Object, UDim2.fromOffset(v.Position.X, v.Position.Y), not skipgui)
 			end
 		end
 
@@ -6549,7 +6734,7 @@ function mainapi:Load(skipgui, profile, profiledata)
 					object:Toggle()
 				end
 				if v.Position and object.Children then
-					object.Children.Position = UDim2.fromOffset(v.Position.X, v.Position.Y)
+					self:MoveObject(object.Children, UDim2.fromOffset(v.Position.X, v.Position.Y), not skipgui)
 				end
 			end
 		end
@@ -7229,8 +7414,9 @@ guipane:CreateButton({
 	Name = 'Reset GUI positions',
 	Function = function()
 		for _, v in mainapi.Categories do
-			v.Object.Position = UDim2.fromOffset(6, 42)
+			mainapi:MoveObject(v.Object, UDim2.fromOffset(6, 42))
 		end
+		mainapi:QueueSave(0.45)
 	end,
 	Tooltip = 'This will reset your GUI back to default'
 })
@@ -7265,10 +7451,11 @@ guipane:CreateButton({
 		for _, v in categories do
 			local prio = priority[v.Object.Name]
 			if v.Object.Visible then
-				v.Object.Position = UDim2.fromOffset((prio and prio > 8 and 235 or 6) + (ind % 8 * 230), 60 + (ind > 7 and 620 or 0))
+				mainapi:MoveObject(v.Object, UDim2.fromOffset((prio and prio > 8 and 235 or 6) + (ind % 8 * 230), 60 + (ind > 7 and 620 or 0)))
 				ind += 1
 			end
 		end
+		mainapi:QueueSave(0.45)
 	end,
 	Tooltip = 'Sorts GUI'
 })
