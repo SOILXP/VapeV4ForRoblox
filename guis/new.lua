@@ -4335,7 +4335,7 @@ function mainapi:CreateCategory(categorysettings)
 			dotsbutton.Visible = not editing
 			bind.Visible = (not editing) and (#self.Bind > 0 or hovered or modulechildren.Visible)
 			favoritebutton.Visible = (not editing) and (hovered or modulechildren.Visible)
-			pinbutton.Visible = (not editing) and (self.Pinned or hovered or modulechildren.Visible)
+			pinbutton.Visible = mainapi:IsPinningEnabled() and (not editing) and (self.Pinned or hovered or modulechildren.Visible)
 			self:UpdateHiddenBox()
 			self:UpdatePinVisual()
 		end
@@ -4355,7 +4355,7 @@ function mainapi:CreateCategory(categorysettings)
 		moduleapi:ApplyHiddenState()
 
 		local function updatePinVisibility()
-			pinbutton.Visible = (not (mainapi.Hidden and mainapi.Hidden.Editing)) and (moduleapi.Pinned or hovered or modulechildren.Visible)
+			pinbutton.Visible = mainapi:IsPinningEnabled() and (not (mainapi.Hidden and mainapi.Hidden.Editing)) and (moduleapi.Pinned or hovered or modulechildren.Visible)
 		end
 
 		local function updateFavoriteVisibility()
@@ -4550,6 +4550,7 @@ function mainapi:CreateCategory(categorysettings)
 		end)
 		modulebutton.InputBegan:Connect(function(inputObj)
 			if mainapi.Hidden and mainapi.Hidden.Editing then return end
+			if not mainapi:IsPinningEnabled() then return end
 			if inputObj.UserInputType == Enum.UserInputType.MouseButton3 then
 				mainapi:PulseImage(pinbutton)
 				mainapi:SetPinned(moduleapi.Name, not moduleapi.Pinned)
@@ -5086,6 +5087,10 @@ function mainapi:IsPinned(name)
 	return self.Pinned and self.Pinned.List and table.find(self.Pinned.List, name) ~= nil
 end
 
+function mainapi:IsPinningEnabled()
+	return self.EnablePinning and self.EnablePinning.Enabled == true
+end
+
 function mainapi:GetPinAccentColor(moduleapi)
 	local hue, sat, val = self.GUIColor.Hue, self.GUIColor.Sat, self.GUIColor.Value
 	local rainbow = self.GUIColor.Rainbow and self.RainbowMode and self.RainbowMode.Value ~= 'Retro'
@@ -5105,6 +5110,7 @@ function mainapi:RefreshPinnedModules()
 		end
 	end
 
+	local pinningEnabled = self:IsPinningEnabled()
 	local categories = {}
 	for _, moduleapi in self.Modules do
 		categories[moduleapi.Category] = categories[moduleapi.Category] or {}
@@ -5113,10 +5119,12 @@ function mainapi:RefreshPinnedModules()
 
 	for _, list in categories do
 		table.sort(list, function(a, b)
-			local apinned = self:IsPinned(a.Name)
-			local bpinned = self:IsPinned(b.Name)
-			if apinned ~= bpinned then
-				return apinned
+			if pinningEnabled then
+				local apinned = self:IsPinned(a.Name)
+				local bpinned = self:IsPinned(b.Name)
+				if apinned ~= bpinned then
+					return apinned
+				end
 			end
 			return a.Name:lower() < b.Name:lower()
 		end)
@@ -8211,6 +8219,14 @@ guipane:CreateToggle({
 	end,
 	Default = true,
 	Tooltip = 'Shows the button to change to Legit Mode'
+})
+mainapi.EnablePinning = guipane:CreateToggle({
+	Name = 'Enable Pinning',
+	Default = false,
+	Function = function()
+		mainapi:RefreshPinnedModules()
+	end,
+	Tooltip = 'Allows middle-clicking modules to pin them to the top of their category'
 })
 local scaleslider = {Object = {}, Value = 1}
 mainapi.Scale = guipane:CreateToggle({
