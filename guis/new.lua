@@ -3911,7 +3911,7 @@ function mainapi:CreateCategory(categorysettings)
 	local hiddenEditButton = Instance.new('TextButton')
 	hiddenEditButton.Name = 'EditHiddenModules'
 	hiddenEditButton.Size = UDim2.fromOffset(32, 40)
-	hiddenEditButton.Position = UDim2.new(1, -70, 0, 0)
+	hiddenEditButton.Position = UDim2.new(1, -66, 0, 0)
 	hiddenEditButton.BackgroundTransparency = 1
 	hiddenEditButton.AutoButtonColor = false
 	hiddenEditButton.Visible = false
@@ -3921,7 +3921,7 @@ function mainapi:CreateCategory(categorysettings)
 	local hiddenEditIcon = Instance.new('ImageLabel')
 	hiddenEditIcon.Name = 'Icon'
 	hiddenEditIcon.Size = UDim2.fromOffset(13, 13)
-	hiddenEditIcon.Position = UDim2.fromOffset(9, 14)
+	hiddenEditIcon.Position = UDim2.fromOffset(10, 14)
 	hiddenEditIcon.BackgroundTransparency = 1
 	hiddenEditIcon.Image = getcustomasset('newvape/assets/new/edit.png')
 	hiddenEditIcon.ImageColor3 = color.Light(uipallet.Main, 0.37)
@@ -4237,14 +4237,25 @@ function mainapi:CreateCategory(categorysettings)
 		moduleapi.HiddenBox = hiddenbox
 		moduleapi.HiddenBoxStroke = hiddenboxstroke
 		moduleapi.NormalText = modulebutton.Text
-		moduleapi.EditHiddenText = '                  '..({modulesettings.Name:gsub(' ', '')})[1]
+		moduleapi.EditHiddenText = '    '..({modulesettings.Name:gsub(' ', '')})[1]
 
 		function moduleapi:UpdateHiddenBox()
 			local hidden = mainapi:IsHidden(self.Name)
 			local accent = mainapi:GetHiddenAccentColor(self)
-			hiddenboxstroke.Color = hidden and color.Light(uipallet.Main, 0.14) or accent
-			hiddenbox.BackgroundColor3 = hidden and color.Dark(uipallet.Main, 0.04) or accent
-			hiddenbox.BackgroundTransparency = hidden and 0.96 or 0.86
+
+			if hidden then
+				-- Hidden/off state: empty square with no fill, matching Vape's outline-only look.
+				hiddenbox.BackgroundTransparency = 1
+				hiddenbox.BackgroundColor3 = uipallet.Main
+				hiddenboxstroke.Color = color.Dark(uipallet.Text, 0.35)
+				hiddenboxstroke.Transparency = 0.25
+			else
+				-- Visible/on state: solid accent/rainbow square with a clean outline.
+				hiddenbox.BackgroundTransparency = 0
+				hiddenbox.BackgroundColor3 = accent
+				hiddenboxstroke.Color = Color3.new(1, 1, 1)
+				hiddenboxstroke.Transparency = 0
+			end
 		end
 
 		function moduleapi:ApplyHiddenState()
@@ -4671,15 +4682,27 @@ function mainapi:UpdateFavoriteRow(name)
 	local editingHidden = self.Hidden and self.Hidden.Editing
 	local hidden = self:IsHidden(name)
 	row.Visible = editingHidden or not hidden
-	row.Text = editingHidden and ('                  '..moduleapi.Name:gsub(' ', '')) or ('            '..moduleapi.Name:gsub(' ', ''))
+	row.Text = editingHidden and ('    '..moduleapi.Name:gsub(' ', '')) or ('            '..moduleapi.Name:gsub(' ', ''))
 	local hiddenbox = row:FindFirstChild('HiddenBox')
 	if hiddenbox then
 		hiddenbox.Visible = editingHidden
 		local stroke = hiddenbox:FindFirstChildOfClass('UIStroke')
 		local accent = self:GetHiddenAccentColor(moduleapi)
-		if stroke then stroke.Color = hidden and color.Light(uipallet.Main, 0.14) or accent end
-		hiddenbox.BackgroundColor3 = hidden and color.Dark(uipallet.Main, 0.04) or accent
-		hiddenbox.BackgroundTransparency = hidden and 0.96 or 0.86
+		if hidden then
+			hiddenbox.BackgroundTransparency = 1
+			hiddenbox.BackgroundColor3 = uipallet.Main
+			if stroke then
+				stroke.Color = color.Dark(uipallet.Text, 0.35)
+				stroke.Transparency = 0.25
+			end
+		else
+			hiddenbox.BackgroundTransparency = 0
+			hiddenbox.BackgroundColor3 = accent
+			if stroke then
+				stroke.Color = Color3.new(1, 1, 1)
+				stroke.Transparency = 0
+			end
+		end
 	end
 	row.Dots.Visible = not editingHidden
 	row.Favorite.Visible = not editingHidden
