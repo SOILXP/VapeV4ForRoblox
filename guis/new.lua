@@ -13,7 +13,6 @@ local mainapi = {
 	Loaded = false,
 	Libraries = {},
 	Modules = {},
-	Pinned = {List = {}},
 	Place = game.PlaceId,
 	Profile = 'default',
 	Profiles = {},
@@ -3987,8 +3986,8 @@ function mainapi:CreateCategory(categorysettings)
 	hiddenCountText.Parent = hiddenCountFrame
 	local hiddenEye = Instance.new('ImageLabel')
 	hiddenEye.Name = 'Eye'
-	hiddenEye.Size = UDim2.fromOffset(10, 8)
-	hiddenEye.Position = UDim2.fromOffset(16, 16)
+	hiddenEye.Size = UDim2.fromOffset(16, 16)
+	hiddenEye.Position = UDim2.fromOffset(16, 12)
 	hiddenEye.BackgroundTransparency = 1
 	hiddenEye.Image = getcustomasset('newvape/assets/new/hiddeneyeoff.png')
 	hiddenEye.ImageColor3 = Color3.fromRGB(118, 118, 126)
@@ -4211,18 +4210,6 @@ function mainapi:CreateCategory(categorysettings)
 		favoritebutton.Parent = modulebutton
 		addTooltip(favoritebutton, 'Add to favorites')
 
-		local pinbutton = Instance.new('ImageLabel')
-		pinbutton.Name = 'PinIndicator'
-		pinbutton.Size = UDim2.fromOffset(14, 14)
-		pinbutton.Position = UDim2.new(1, -44, 0, 13)
-		pinbutton.AnchorPoint = Vector2.new(1, 0)
-		pinbutton.BackgroundTransparency = 1
-		pinbutton.Visible = false
-		pinbutton.Image = getcustomasset('newvape/assets/new/pin.png')
-		pinbutton.ImageColor3 = Color3.fromRGB(118, 118, 126)
-		pinbutton.ImageTransparency = 0
-		pinbutton.Parent = modulebutton
-		addTooltip(pinbutton, 'Middle click to pin')
 
 		local hiddenbox = Instance.new('TextButton')
 		hiddenbox.Name = 'HiddenBox'
@@ -4273,9 +4260,7 @@ function mainapi:CreateCategory(categorysettings)
 		modulesettings.Function = modulesettings.Function or function() end
 		addMaid(moduleapi)
 		moduleapi.Favorited = mainapi:IsFavorite(modulesettings.Name)
-		moduleapi.Pinned = mainapi:IsPinned(modulesettings.Name)
 		moduleapi.FavoriteStar = favoritebutton
-		moduleapi.PinIndicator = pinbutton
 		moduleapi.HiddenBox = hiddenbox
 		moduleapi.HiddenBoxOutline = hiddenboxoutline
 		moduleapi.HiddenBoxFill = hiddenboxfill
@@ -4312,13 +4297,6 @@ function mainapi:CreateCategory(categorysettings)
 			end
 		end
 
-		function moduleapi:UpdatePinPosition()
-			local focused = hovered or modulechildren.Visible
-			local target = focused and UDim2.new(1, -86, 0, 13) or UDim2.new(1, -44, 0, 13)
-			tween:Tween(pinbutton, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				Position = target
-			})
-		end
 
 		function moduleapi:ApplyHiddenState()
 			local editing = mainapi.Hidden and mainapi.Hidden.Editing
@@ -4334,35 +4312,19 @@ function mainapi:CreateCategory(categorysettings)
 			dotsbutton.Visible = not editing
 			bind.Visible = (not editing) and (#self.Bind > 0 or hovered or modulechildren.Visible)
 			favoritebutton.Visible = (not editing) and modulechildren.Visible
-			pinbutton.Visible = mainapi:IsPinningEnabled() and (not editing) and (self.Pinned or hovered or modulechildren.Visible)
 			self:UpdateHiddenBox()
-			self:UpdatePinVisual()
-			self:UpdatePinPosition()
 		end
 
-		function moduleapi:UpdatePinVisual()
-			local target = self.Pinned and mainapi:GetPinAccentColor(self) or Color3.fromRGB(118, 118, 126)
-			tween:Tween(pinbutton, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				ImageColor3 = target
-			})
-			self:UpdatePinPosition()
-		end
 
 		function moduleapi:UpdateFavoriteVisual()
 			mainapi:AnimateStarColor(favoritebutton, self.Favorited, self.FavoriteStarHovered)
 		end
-		moduleapi:UpdatePinVisual()
 		moduleapi:UpdateFavoriteVisual()
 		moduleapi:ApplyHiddenState()
 
-		local function updatePinVisibility()
-			pinbutton.Visible = mainapi:IsPinningEnabled() and (not (mainapi.Hidden and mainapi.Hidden.Editing)) and (moduleapi.Pinned or hovered or modulechildren.Visible)
-			moduleapi:UpdatePinPosition()
-		end
 
 		local function updateFavoriteVisibility()
 			favoritebutton.Visible = (not (mainapi.Hidden and mainapi.Hidden.Editing)) and modulechildren.Visible
-			updatePinVisibility()
 		end
 
 		local function setModuleChildrenVisible(state)
@@ -4550,14 +4512,6 @@ function mainapi:CreateCategory(categorysettings)
 			if mainapi.Hidden and mainapi.Hidden.Editing then return end
 			setModuleChildrenVisible(not modulechildren.Visible)
 		end)
-		modulebutton.InputBegan:Connect(function(inputObj)
-			if mainapi.Hidden and mainapi.Hidden.Editing then return end
-			if not mainapi:IsPinningEnabled() then return end
-			if inputObj.UserInputType == Enum.UserInputType.MouseButton3 then
-				mainapi:PulseImage(pinbutton)
-				mainapi:SetPinned(moduleapi.Name, not moduleapi.Pinned)
-			end
-		end)
 		if inputService.TouchEnabled then
 			local heldbutton = false
 			modulebutton.MouseButton1Down:Connect(function()
@@ -4629,9 +4583,6 @@ function mainapi:CreateCategory(categorysettings)
 					mainapi.Modules[v].Object.LayoutOrder = i * 2
 					mainapi.Modules[v].Children.LayoutOrder = i * 2 + 1
 				end
-			end
-			if mainapi.RefreshPinnedModules then
-				mainapi:RefreshPinnedModules()
 			end
 		end)
 
@@ -5161,98 +5112,6 @@ function mainapi:SetFavorite(name, state, skipSave)
 	end
 end
 
-function mainapi:IsPinned(name)
-	return self.Pinned and self.Pinned.List and table.find(self.Pinned.List, name) ~= nil
-end
-
-function mainapi:IsPinningEnabled()
-	return self.EnablePinning and self.EnablePinning.Enabled == true
-end
-
-function mainapi:GetPinAccentColor(moduleapi)
-	local hue, sat, val = self.GUIColor.Hue, self.GUIColor.Sat, self.GUIColor.Value
-	local rainbow = self.GUIColor.Rainbow and self.RainbowMode and self.RainbowMode.Value ~= 'Retro'
-	if rainbow then
-		return Color3.fromHSV(self:Color((hue - (((moduleapi and moduleapi.Index) or 1) * 0.025)) % 1))
-	end
-	return Color3.fromHSV(hue, sat, val)
-end
-
-function mainapi:RefreshPinnedModules()
-	self.Pinned = self.Pinned or {List = {}}
-	self.Pinned.List = self.Pinned.List or {}
-
-	for i = #self.Pinned.List, 1, -1 do
-		if not self.Modules[self.Pinned.List[i]] then
-			table.remove(self.Pinned.List, i)
-		end
-	end
-
-	local pinningEnabled = self:IsPinningEnabled()
-	local categories = {}
-	for _, moduleapi in self.Modules do
-		categories[moduleapi.Category] = categories[moduleapi.Category] or {}
-		table.insert(categories[moduleapi.Category], moduleapi)
-	end
-
-	for _, list in categories do
-		table.sort(list, function(a, b)
-			if pinningEnabled then
-				local apinned = self:IsPinned(a.Name)
-				local bpinned = self:IsPinned(b.Name)
-				if apinned ~= bpinned then
-					return apinned
-				end
-			end
-			return a.Name:lower() < b.Name:lower()
-		end)
-
-		for order, moduleapi in list do
-			moduleapi.Index = order
-			if moduleapi.Object then
-				moduleapi.Object.LayoutOrder = order * 2
-			end
-			if moduleapi.Children then
-				moduleapi.Children.LayoutOrder = order * 2 + 1
-			end
-			moduleapi.Pinned = self:IsPinned(moduleapi.Name)
-			if moduleapi.UpdatePinVisual then
-				moduleapi:UpdatePinVisual()
-			end
-			if moduleapi.ApplyHiddenState then
-				moduleapi:ApplyHiddenState()
-			end
-		end
-	end
-end
-
-function mainapi:SetPinned(name, state, skipSave)
-	self.Pinned = self.Pinned or {List = {}}
-	self.Pinned.List = self.Pinned.List or {}
-	local ind = table.find(self.Pinned.List, name)
-
-	if state and not ind then
-		table.insert(self.Pinned.List, name)
-	elseif not state and ind then
-		table.remove(self.Pinned.List, ind)
-	end
-
-	local moduleapi = self.Modules[name]
-	if moduleapi then
-		moduleapi.Pinned = table.find(self.Pinned.List, name) ~= nil
-		if moduleapi.UpdatePinVisual then
-			moduleapi:UpdatePinVisual()
-		end
-		if moduleapi.ApplyHiddenState then
-			moduleapi:ApplyHiddenState()
-		end
-	end
-
-	self:RefreshPinnedModules()
-	if not skipSave then
-		self:QueueSave(0.35)
-	end
-end
 
 function mainapi:IsHidden(name)
 	return self.Hidden and self.Hidden.List and table.find(self.Hidden.List, name) ~= nil
@@ -7664,9 +7523,6 @@ function mainapi:Load(skipgui, profile, profiledata)
 		self.Hidden.Editing = false
 		self:RefreshHiddenModules()
 
-		self.Pinned = self.Pinned or {List = {}}
-		self.Pinned.List = savedata.Pinned or self.Pinned.List or {}
-		self:RefreshPinnedModules()
 
 		if savedata.Legit then
 			for i, v in savedata.Legit do
@@ -7796,8 +7652,7 @@ function mainapi:Save(newprofile)
 		Categories = {},
 		Legit = {},
 		Favorites = self.Favorites and self.Favorites.List or {},
-		Hidden = self.Hidden and self.Hidden.List or {},
-		Pinned = self.Pinned and self.Pinned.List or {}
+		Hidden = self.Hidden and self.Hidden.List or {}
 	}
 
 	for i, v in self.Categories do
@@ -8297,14 +8152,6 @@ guipane:CreateToggle({
 	end,
 	Default = true,
 	Tooltip = 'Shows the button to change to Legit Mode'
-})
-mainapi.EnablePinning = guipane:CreateToggle({
-	Name = 'Enable Pinning',
-	Default = false,
-	Function = function()
-		mainapi:RefreshPinnedModules()
-	end,
-	Tooltip = 'Allows middle-clicking modules to pin them to the top of their category'
 })
 local scaleslider = {Object = {}, Value = 1}
 mainapi.Scale = guipane:CreateToggle({
