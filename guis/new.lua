@@ -3001,12 +3001,12 @@ function mainapi:CreateGUI()
 
 		local favoritesButton = Instance.new('TextButton')
 		favoritesButton.Name = 'FavoritesButton'
-		favoritesButton.Size = UDim2.fromOffset(28, 28)
-		favoritesButton.Position = UDim2.new(1, -64, 0, 4)
+		favoritesButton.Size = UDim2.fromOffset(24, 24)
+		favoritesButton.Position = UDim2.new(1, -56, 0, 5)
 		favoritesButton.BackgroundTransparency = 1
 		favoritesButton.AutoButtonColor = false
 		favoritesButton.Text = '★'
-		favoritesButton.TextSize = 24
+		favoritesButton.TextSize = 21
 		favoritesButton.FontFace = uipallet.FontSemiBold
 		favoritesButton.TextColor3 = Color3.fromRGB(118, 118, 126)
 		favoritesButton.Parent = bar
@@ -4914,7 +4914,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	local star = Instance.new('TextButton')
 	star.Name = 'Favorite'
 	star.Size = UDim2.fromOffset(24, 24)
-	star.Position = UDim2.new(1, -44, 0, 8)
+	star.Position = UDim2.new(1, -34, 0, 8)
 	star.AnchorPoint = Vector2.new(1, 0)
 	star.BackgroundTransparency = 1
 	star.AutoButtonColor = false
@@ -5004,7 +5004,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		bind.Visible = false
 		tween:Tween(star, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Position = UDim2.new(1, -44, 0, 8)
+			Position = UDim2.new(1, -34, 0, 8)
 		})
 	end)
 	row.MouseButton1Click:Connect(function()
