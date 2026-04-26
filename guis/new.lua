@@ -3911,7 +3911,7 @@ function mainapi:CreateCategory(categorysettings)
 	local hiddenEditButton = Instance.new('TextButton')
 	hiddenEditButton.Name = 'EditHiddenModules'
 	hiddenEditButton.Size = UDim2.fromOffset(32, 40)
-	hiddenEditButton.Position = UDim2.new(1, -66, 0, 0)
+	hiddenEditButton.Position = UDim2.new(1, -62, 0, 0)
 	hiddenEditButton.BackgroundTransparency = 1
 	hiddenEditButton.AutoButtonColor = false
 	hiddenEditButton.Visible = false
@@ -3959,24 +3959,47 @@ function mainapi:CreateCategory(categorysettings)
 	hiddenCountText.TextSize = 13
 	hiddenCountText.FontFace = uipallet.Font
 	hiddenCountText.Parent = hiddenCountFrame
-	local hiddenEye = Instance.new('TextLabel')
+	local hiddenEye = Instance.new('Frame')
 	hiddenEye.Name = 'Eye'
 	hiddenEye.Size = UDim2.fromOffset(18, 18)
 	hiddenEye.Position = UDim2.fromOffset(16, 11)
 	hiddenEye.BackgroundTransparency = 1
-	hiddenEye.Text = '◉'
-	hiddenEye.TextColor3 = color.Light(uipallet.Main, 0.37)
-	hiddenEye.TextSize = 16
-	hiddenEye.FontFace = uipallet.FontSemiBold
 	hiddenEye.Parent = hiddenCountFrame
+	local hiddenEyeShape = Instance.new('Frame')
+	hiddenEyeShape.Name = 'Shape'
+	hiddenEyeShape.Size = UDim2.fromOffset(15, 9)
+	hiddenEyeShape.Position = UDim2.fromOffset(1, 4)
+	hiddenEyeShape.BackgroundTransparency = 1
+	hiddenEyeShape.BorderSizePixel = 0
+	hiddenEyeShape.Parent = hiddenEye
+	local hiddenEyeCorner = Instance.new('UICorner')
+	hiddenEyeCorner.CornerRadius = UDim.new(1, 0)
+	hiddenEyeCorner.Parent = hiddenEyeShape
+	local hiddenEyeStroke = Instance.new('UIStroke')
+	hiddenEyeStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	hiddenEyeStroke.Thickness = 1.2
+	hiddenEyeStroke.Color = color.Light(uipallet.Main, 0.37)
+	hiddenEyeStroke.Transparency = 0
+	hiddenEyeStroke.Parent = hiddenEyeShape
+	local hiddenPupil = Instance.new('Frame')
+	hiddenPupil.Name = 'Pupil'
+	hiddenPupil.Size = UDim2.fromOffset(4, 4)
+	hiddenPupil.Position = UDim2.fromOffset(6, 6)
+	hiddenPupil.BackgroundColor3 = color.Light(uipallet.Main, 0.37)
+	hiddenPupil.BorderSizePixel = 0
+	hiddenPupil.Parent = hiddenEye
+	local hiddenPupilCorner = Instance.new('UICorner')
+	hiddenPupilCorner.CornerRadius = UDim.new(1, 0)
+	hiddenPupilCorner.Parent = hiddenPupil
 	local hiddenSlash = Instance.new('Frame')
 	hiddenSlash.Name = 'Slash'
-	hiddenSlash.Size = UDim2.fromOffset(22, 2)
-	hiddenSlash.Position = UDim2.fromOffset(14, 20)
+	hiddenSlash.Size = UDim2.fromOffset(16, 2)
+	hiddenSlash.Position = UDim2.fromOffset(2, 9)
 	hiddenSlash.BackgroundColor3 = color.Light(uipallet.Main, 0.37)
 	hiddenSlash.BorderSizePixel = 0
 	hiddenSlash.Rotation = -38
-	hiddenSlash.Parent = hiddenCountFrame
+	hiddenSlash.ZIndex = 3
+	hiddenSlash.Parent = hiddenEye
 
 	local children = Instance.new('ScrollingFrame')
 	children.Name = 'Children'
@@ -4197,19 +4220,26 @@ function mainapi:CreateCategory(categorysettings)
 		hiddenbox.Name = 'HiddenBox'
 		hiddenbox.Size = UDim2.fromOffset(14, 14)
 		hiddenbox.Position = UDim2.fromOffset(21, 13)
-		hiddenbox.BackgroundColor3 = uipallet.Main
 		hiddenbox.BackgroundTransparency = 1
 		hiddenbox.BorderSizePixel = 0
 		hiddenbox.AutoButtonColor = false
 		hiddenbox.Visible = false
 		hiddenbox.Text = ''
 		hiddenbox.Parent = modulebutton
-		local hiddenboxstroke = Instance.new('UIStroke')
-		hiddenboxstroke.Thickness = 1.15
-		hiddenboxstroke.Color = Color3.fromRGB(105, 105, 118)
-hiddenboxstroke.Transparency = 0
-pcall(function() hiddenboxstroke.LineJoinMode = Enum.LineJoinMode.Miter end)
-hiddenboxstroke.Parent = hiddenbox
+		local hiddenboxoutline = Instance.new('Frame')
+		hiddenboxoutline.Name = 'Outline'
+		hiddenboxoutline.Size = UDim2.fromScale(1, 1)
+		hiddenboxoutline.BackgroundTransparency = 1
+		hiddenboxoutline.BorderSizePixel = 1
+		hiddenboxoutline.BorderColor3 = Color3.fromRGB(105, 105, 118)
+		hiddenboxoutline.Parent = hiddenbox
+		local hiddenboxfill = Instance.new('Frame')
+		hiddenboxfill.Name = 'Fill'
+		hiddenboxfill.Size = UDim2.new(1, -2, 1, -2)
+		hiddenboxfill.Position = UDim2.fromOffset(1, 1)
+		hiddenboxfill.BackgroundTransparency = 1
+		hiddenboxfill.BorderSizePixel = 0
+		hiddenboxfill.Parent = hiddenbox
 		addTooltip(hiddenbox, 'Show / hide module')
 
 		modulechildren.Name = modulesettings.Name..'Children'
@@ -4237,26 +4267,38 @@ hiddenboxstroke.Parent = hiddenbox
 		moduleapi.Favorited = mainapi:IsFavorite(modulesettings.Name)
 		moduleapi.FavoriteStar = favoritebutton
 		moduleapi.HiddenBox = hiddenbox
-		moduleapi.HiddenBoxStroke = hiddenboxstroke
+		moduleapi.HiddenBoxOutline = hiddenboxoutline
+		moduleapi.HiddenBoxFill = hiddenboxfill
 		moduleapi.NormalText = modulebutton.Text
 		moduleapi.EditHiddenText = '    '..({modulesettings.Name:gsub(' ', '')})[1]
 
 		function moduleapi:UpdateHiddenBox()
 			local hidden = mainapi:IsHidden(self.Name)
 			local accent = mainapi:GetHiddenAccentColor(self)
+			local outline = hiddenbox:FindFirstChild('Outline')
+			local fill = hiddenbox:FindFirstChild('Fill')
 
 			if hidden then
-				-- Hidden/off state: empty square with no fill, matching Vape's outline-only look.
 				hiddenbox.BackgroundTransparency = 1
-				hiddenbox.BackgroundColor3 = uipallet.Main
-				hiddenboxstroke.Color = Color3.fromRGB(105, 105, 118)
-hiddenboxstroke.Transparency = 0
+				if outline then
+					outline.BackgroundTransparency = 1
+					outline.BorderSizePixel = 1
+					outline.BorderColor3 = Color3.fromRGB(112, 112, 124)
+				end
+				if fill then
+					fill.BackgroundTransparency = 1
+				end
 			else
-				-- Visible/on state: solid accent/rainbow square with a clean outline.
-				hiddenbox.BackgroundTransparency = 0
-				hiddenbox.BackgroundColor3 = accent
-				hiddenboxstroke.Color = Color3.new(1, 1, 1)
-				hiddenboxstroke.Transparency = 0
+				hiddenbox.BackgroundTransparency = 1
+				if outline then
+					outline.BackgroundTransparency = 1
+					outline.BorderSizePixel = 1
+					outline.BorderColor3 = Color3.new(1, 1, 1)
+				end
+				if fill then
+					fill.BackgroundColor3 = accent
+					fill.BackgroundTransparency = 0
+				end
 			end
 		end
 
@@ -4688,21 +4730,29 @@ function mainapi:UpdateFavoriteRow(name)
 	local hiddenbox = row:FindFirstChild('HiddenBox')
 	if hiddenbox then
 		hiddenbox.Visible = editingHidden
-		local stroke = hiddenbox:FindFirstChildOfClass('UIStroke')
+		local outline = hiddenbox:FindFirstChild('Outline')
+		local fill = hiddenbox:FindFirstChild('Fill')
 		local accent = self:GetHiddenAccentColor(moduleapi)
 		if hidden then
 			hiddenbox.BackgroundTransparency = 1
-			hiddenbox.BackgroundColor3 = uipallet.Main
-			if stroke then
-				stroke.Color = Color3.fromRGB(105, 105, 118)
-stroke.Transparency = 0
+			if outline then
+				outline.BackgroundTransparency = 1
+				outline.BorderSizePixel = 1
+				outline.BorderColor3 = Color3.fromRGB(112, 112, 124)
+			end
+			if fill then
+				fill.BackgroundTransparency = 1
 			end
 		else
-			hiddenbox.BackgroundTransparency = 0
-			hiddenbox.BackgroundColor3 = accent
-			if stroke then
-				stroke.Color = Color3.new(1, 1, 1)
-				stroke.Transparency = 0
+			hiddenbox.BackgroundTransparency = 1
+			if outline then
+				outline.BackgroundTransparency = 1
+				outline.BorderSizePixel = 1
+				outline.BorderColor3 = Color3.new(1, 1, 1)
+			end
+			if fill then
+				fill.BackgroundColor3 = accent
+				fill.BackgroundTransparency = 0
 			end
 		end
 	end
@@ -4741,19 +4791,26 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	hiddenbox.Name = 'HiddenBox'
 	hiddenbox.Size = UDim2.fromOffset(14, 14)
 	hiddenbox.Position = UDim2.fromOffset(21, 13)
-	hiddenbox.BackgroundColor3 = uipallet.Main
 	hiddenbox.BackgroundTransparency = 1
 	hiddenbox.BorderSizePixel = 0
 	hiddenbox.AutoButtonColor = false
 	hiddenbox.Visible = false
 	hiddenbox.Text = ''
 	hiddenbox.Parent = row
-	local hiddenboxstroke = Instance.new('UIStroke')
-	hiddenboxstroke.Thickness = 1.15
-	hiddenboxstroke.Color = Color3.fromRGB(105, 105, 118)
-hiddenboxstroke.Transparency = 0
-pcall(function() hiddenboxstroke.LineJoinMode = Enum.LineJoinMode.Miter end)
-hiddenboxstroke.Parent = hiddenbox
+	local hiddenboxoutline = Instance.new('Frame')
+	hiddenboxoutline.Name = 'Outline'
+	hiddenboxoutline.Size = UDim2.fromScale(1, 1)
+	hiddenboxoutline.BackgroundTransparency = 1
+	hiddenboxoutline.BorderSizePixel = 1
+	hiddenboxoutline.BorderColor3 = Color3.fromRGB(105, 105, 118)
+	hiddenboxoutline.Parent = hiddenbox
+	local hiddenboxfill = Instance.new('Frame')
+	hiddenboxfill.Name = 'Fill'
+	hiddenboxfill.Size = UDim2.new(1, -2, 1, -2)
+	hiddenboxfill.Position = UDim2.fromOffset(1, 1)
+	hiddenboxfill.BackgroundTransparency = 1
+	hiddenboxfill.BorderSizePixel = 0
+	hiddenboxfill.Parent = hiddenbox
 	addTooltip(hiddenbox, 'Show / hide module')
 
 	local star = Instance.new('TextButton')
