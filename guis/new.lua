@@ -3007,17 +3007,20 @@ function mainapi:CreateGUI()
 		favoritesButton.Text = '★'
 		favoritesButton.TextSize = 24
 		favoritesButton.FontFace = uipallet.FontSemiBold
-		favoritesButton.TextColor3 = color.Light(uipallet.Main, 0.37)
+		favoritesButton.TextColor3 = Color3.fromRGB(118, 118, 126)
 		favoritesButton.Parent = bar
 		addTooltip(favoritesButton, 'Open favorites')
 
 		favoritesButton.MouseEnter:Connect(function()
+			mainapi.Favorites.StarButtonHovered = true
 			mainapi:UpdateFavoritesButton()
 		end)
 		favoritesButton.MouseLeave:Connect(function()
+			mainapi.Favorites.StarButtonHovered = false
 			mainapi:UpdateFavoritesButton()
 		end)
 		favoritesButton.MouseButton1Click:Connect(function()
+			mainapi:PulseStar(favoritesButton)
 			local fav = mainapi.Categories.Favorites
 			if not fav or not fav.Button then return end
 			fav.Button:Toggle()
@@ -4320,7 +4323,7 @@ function mainapi:CreateCategory(categorysettings)
 		end
 
 		function moduleapi:UpdateFavoriteVisual()
-			favoritebutton.TextColor3 = self.Favorited and Color3.fromRGB(255, 170, 42) or color.Dark(uipallet.Text, 0.43)
+			mainapi:AnimateStarColor(favoritebutton, self.Favorited, self.FavoriteStarHovered)
 		end
 		moduleapi:UpdateFavoriteVisual()
 		moduleapi:ApplyHiddenState()
@@ -4417,12 +4420,15 @@ function mainapi:CreateCategory(categorysettings)
 			favoriteClickGuard = true
 		end)
 		favoritebutton.MouseEnter:Connect(function()
-			favoritebutton.TextColor3 = Color3.fromRGB(255, 190, 70)
+			moduleapi.FavoriteStarHovered = true
+			moduleapi:UpdateFavoriteVisual()
 		end)
 		favoritebutton.MouseLeave:Connect(function()
+			moduleapi.FavoriteStarHovered = false
 			moduleapi:UpdateFavoriteVisual()
 		end)
 		favoritebutton.MouseButton1Click:Connect(function()
+			mainapi:PulseStar(favoritebutton)
 			mainapi:SetFavorite(moduleapi.Name, not moduleapi.Favorited)
 			favoriteClickGuard = false
 		end)
@@ -4711,11 +4717,35 @@ function mainapi:IsFavorite(name)
 	return self.Favorites and self.Favorites.List and table.find(self.Favorites.List, name) ~= nil
 end
 
+function mainapi:AnimateStarColor(star, active, hover)
+	if not star then return end
+	local target = active and Color3.fromRGB(255, 170, 42) or (hover and Color3.fromRGB(205, 205, 215) or Color3.fromRGB(118, 118, 126))
+	tween:Tween(star, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		TextColor3 = target
+	})
+end
+
+function mainapi:PulseStar(star)
+	if not star then return end
+	local originalSize = star:GetAttribute('OriginalTextSize') or star.TextSize
+	star:SetAttribute('OriginalTextSize', originalSize)
+	tween:Tween(star, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		TextSize = originalSize + 3
+	})
+	task.delay(0.08, function()
+		if star and star.Parent then
+			tween:Tween(star, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				TextSize = originalSize
+			})
+		end
+	end)
+end
+
 function mainapi:UpdateFavoritesButton()
 	if not self.Favorites or not self.Favorites.StarButton then return end
 	local fav = self.Categories and self.Categories.Favorites
 	local open = fav and fav.Button and fav.Button.Enabled
-	self.Favorites.StarButton.TextColor3 = open and Color3.fromRGB(255, 170, 42) or color.Light(uipallet.Main, 0.37)
+	self:AnimateStarColor(self.Favorites.StarButton, open, self.Favorites.StarButtonHovered)
 end
 
 function mainapi:UpdateFavoriteRow(name)
@@ -4763,7 +4793,7 @@ function mainapi:UpdateFavoriteRow(name)
 	row.BackgroundColor3 = moduleapi.Enabled and color.Light(uipallet.Main, 0.02) or uipallet.Main
 	local star = row:FindFirstChild('Favorite')
 	if star then
-		star.TextColor3 = Color3.fromRGB(255, 170, 42)
+		self:AnimateStarColor(star, true, star:GetAttribute('Hovering') == true)
 	end
 end
 
@@ -4924,7 +4954,16 @@ function mainapi:CreateFavoriteRow(moduleapi)
 			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
 		end
 	end)
+	star.MouseEnter:Connect(function()
+		star:SetAttribute('Hovering', true)
+		self:AnimateStarColor(star, true, true)
+	end)
+	star.MouseLeave:Connect(function()
+		star:SetAttribute('Hovering', false)
+		self:AnimateStarColor(star, true, false)
+	end)
 	star.MouseButton1Click:Connect(function()
+		self:PulseStar(star)
 		self:SetFavorite(moduleapi.Name, false)
 		rowStarClickGuard = false
 	end)
