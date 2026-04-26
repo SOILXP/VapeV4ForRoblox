@@ -416,14 +416,14 @@ local function decodeBase64(data)
 	end))
 end
 
-local function ensureEmbeddedAsset(path, b64data)
-	if not isfile(path) then
+local function ensureEmbeddedAsset(path, b64data, overwrite)
+	if overwrite or not isfile(path) then
 		createDownloader(path)
 		writefile(path, decodeBase64(b64data))
 	end
 end
 
-ensureEmbeddedAsset('newvape/assets/new/hiddeneyeoff.png', 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAACTElEQVR4nIWSQUsbARCFv9ndxDXNaoMxJimuB7EXPVWoFhXcQPVgf60HsdQ220MMiN6E9iIIbdPaaKK7kJjdzU4PIYog9J2GYfiYmfekWqli2zZr62vaaDQkiRPGUtVRISAIz8kCyGQzWi6XqdVq6td9SZKE9XfrOlucRQxhMBgQBAHn5+fc3d49IUm1UgVgfn5eNzY3uO/fc3BwIJlMhm1vW6emprAsC1UlTVNarRaNRkPiKH4EGIbB5tamuq4LQLvdxvd9GSZDTNNkpjija2/XyDt5VJXOTYfPXz7L4H6AAbC6uqqu62KaJoYYFAoFdnd3dbx+61dLDj8eShiGmKbJbGmWnZ0dtSwLw3EcXXq9hGmaAFxfX/PV/4rjOHiep5lMBoB+r8/p6enDYwuFAouLi2psbG4wHtJU+f3nNzedG1FV5ubm2Puw9wDpdrqSpunodhGWV5Yx2n/bT+yyLIsoiuj1eogI+XwerzbaJI5jgiBAVVFVwjDEODs7k3FTRHBdF9MwaR436XQ6JElCsVhk78OeighHn44kDEPiOObk5GTkQrlcVq/mkc1mSdOUy8tLmsdNSZIEy7IolUrq1byRO3VfbNvW6qsq3799l4ccVKoV3drawrZtAKIo4urqChRmijPkcjlUlX6vz/7+vkRR9DRIAJOTk7xZfaOVSoWJiQlEHkM3HA65u70j9yJHEATUv9QljuOngLGy2SwLCws6/XIaJ+/Qvm7z88dPut2ulEolfb/znlarhV/35VnA/7SysqIXFxfS7/f5B5J9FTu5OOA9AAAAAElFTkSuQmCC')
+ensureEmbeddedAsset('newvape/assets/new/hiddeneyeoff.png', 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABM0lEQVR4nL2TPS9EQRSGn7m7olBssbVEIxLJkkg0IhG0WlEQtUon8Sd0PjoRlWxBRaUShfgDCo0QDYVENBLrUZhh2LsUEqeZe868H2fmnoH/DLVQK3ktdAICxfdyCKH1m0NFLRWN+5PqSuykAKjmrslBHQQmgH6gAlwDl8AOsFemHDKHc/VZvY3fJ+qDn7GYHRPUalwXImAtdoBaV6ej2KY6HzEbH9ykpA6rM1lXfepdJBxm9SF1NO88bfSotSyfy9peysFqV05MR1iO4Cl1RL1S19XZDNtQb9TdxK2GEF6i+hbQDTSBeuQ8AQPqNjAO9AIHwGrktNLtFyGEV7UBnAJHwCMwxvuw3QPHwH4I4aLsNxZqVT1Tm22Ar9j2YcvmoJbyKFik+U/5T+J/j+jc8S2UxRtM0zclRYT4vgAAAABJRU5ErkJggg==', true)
 	return getcustomassets[path] or ''
 end
 
@@ -3992,10 +3992,13 @@ function mainapi:CreateCategory(categorysettings)
 	hiddenCountText.Parent = hiddenCountFrame
 	local hiddenEye = Instance.new('ImageLabel')
 	hiddenEye.Name = 'Eye'
-	hiddenEye.Size = UDim2.fromOffset(16, 14)
-	hiddenEye.Position = UDim2.fromOffset(17, 13)
+	hiddenEye.Size = UDim2.fromOffset(11, 9)
+	hiddenEye.Position = UDim2.fromOffset(25, 15)
 	hiddenEye.BackgroundTransparency = 1
 	hiddenEye.Image = getcustomasset('newvape/assets/new/hiddeneyeoff.png')
+	hiddenEye.ImageColor3 = Color3.fromRGB(132, 132, 140)
+	hiddenEye.ImageTransparency = 0
+	hiddenEye.ScaleType = Enum.ScaleType.Fit
 	hiddenEye.Parent = hiddenCountFrame
 
 	local children = Instance.new('ScrollingFrame')
