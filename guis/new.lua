@@ -3941,8 +3941,8 @@ function mainapi:CreateCategory(categorysettings)
 	local hiddenHeaderHover = false
 	local hiddenEditButton = Instance.new('TextButton')
 	hiddenEditButton.Name = 'EditHiddenModules'
-	hiddenEditButton.Size = UDim2.fromOffset(32, 40)
-	hiddenEditButton.Position = UDim2.new(1, -62, 0, 0)
+	hiddenEditButton.Size = UDim2.fromOffset(30, 40)
+	hiddenEditButton.Position = UDim2.new(1, -61, 0, 0)
 	hiddenEditButton.BackgroundTransparency = 1
 	hiddenEditButton.AutoButtonColor = false
 	hiddenEditButton.Visible = false
@@ -3951,8 +3951,8 @@ function mainapi:CreateCategory(categorysettings)
 	addTooltip(hiddenEditButton, 'Edit Hidden modules')
 	local hiddenEditIcon = Instance.new('ImageLabel')
 	hiddenEditIcon.Name = 'Icon'
-	hiddenEditIcon.Size = UDim2.fromOffset(13, 13)
-	hiddenEditIcon.Position = UDim2.fromOffset(10, 14)
+	hiddenEditIcon.Size = UDim2.fromOffset(12, 12)
+	hiddenEditIcon.Position = UDim2.fromOffset(11, 14)
 	hiddenEditIcon.BackgroundTransparency = 1
 	hiddenEditIcon.Image = getcustomasset('newvape/assets/new/edit.png')
 	hiddenEditIcon.ImageColor3 = color.Light(uipallet.Main, 0.37)
@@ -3974,29 +3974,29 @@ function mainapi:CreateCategory(categorysettings)
 
 	local hiddenCountFrame = Instance.new('Frame')
 	hiddenCountFrame.Name = 'HiddenCount'
-	hiddenCountFrame.Size = UDim2.fromOffset(48, 40)
-	hiddenCountFrame.Position = UDim2.new(1, -87, 0, 0)
+	hiddenCountFrame.Size = UDim2.fromOffset(40, 40)
+	hiddenCountFrame.Position = UDim2.new(1, -80, 0, 0)
 	hiddenCountFrame.BackgroundTransparency = 1
 	hiddenCountFrame.Visible = false
 	hiddenCountFrame.Parent = window
 	addTooltip(hiddenCountFrame, 'Shows hidden modules')
 	local hiddenCountText = Instance.new('TextLabel')
 	hiddenCountText.Name = 'Count'
-	hiddenCountText.Size = UDim2.fromOffset(15, 40)
-	hiddenCountText.Position = UDim2.fromOffset(1, 0)
+	hiddenCountText.Size = UDim2.fromOffset(12, 40)
+	hiddenCountText.Position = UDim2.fromOffset(0, 0)
 	hiddenCountText.BackgroundTransparency = 1
 	hiddenCountText.Text = '0'
-	hiddenCountText.TextColor3 = color.Light(uipallet.Main, 0.37)
+	hiddenCountText.TextColor3 = Color3.fromRGB(145, 145, 153)
 	hiddenCountText.TextSize = 13
 	hiddenCountText.FontFace = uipallet.Font
 	hiddenCountText.Parent = hiddenCountFrame
 	local hiddenEye = Instance.new('ImageLabel')
 	hiddenEye.Name = 'Eye'
-	hiddenEye.Size = UDim2.fromOffset(11, 9)
-	hiddenEye.Position = UDim2.fromOffset(25, 15)
+	hiddenEye.Size = UDim2.fromOffset(10, 8)
+	hiddenEye.Position = UDim2.fromOffset(15, 16)
 	hiddenEye.BackgroundTransparency = 1
 	hiddenEye.Image = getcustomasset('newvape/assets/new/hiddeneyeoff.png')
-	hiddenEye.ImageColor3 = Color3.fromRGB(132, 132, 140)
+	hiddenEye.ImageColor3 = Color3.fromRGB(118, 118, 126)
 	hiddenEye.ImageTransparency = 0
 	hiddenEye.ScaleType = Enum.ScaleType.Fit
 	hiddenEye.Parent = hiddenCountFrame
@@ -4231,7 +4231,7 @@ function mainapi:CreateCategory(categorysettings)
 		hiddenboxoutline.Size = UDim2.fromScale(1, 1)
 		hiddenboxoutline.BackgroundTransparency = 1
 		hiddenboxoutline.BorderSizePixel = 1
-		hiddenboxoutline.BorderColor3 = Color3.fromRGB(105, 105, 118)
+		hiddenboxoutline.BorderColor3 = Color3.fromRGB(62, 62, 70)
 		hiddenboxoutline.Parent = hiddenbox
 		local hiddenboxfill = Instance.new('Frame')
 		hiddenboxfill.Name = 'Fill'
@@ -4283,7 +4283,7 @@ function mainapi:CreateCategory(categorysettings)
 				if outline then
 					outline.BackgroundTransparency = 1
 					outline.BorderSizePixel = 1
-					outline.BorderColor3 = Color3.fromRGB(112, 112, 124)
+					outline.BorderColor3 = Color3.fromRGB(62, 62, 70)
 				end
 				if fill then
 					fill.BackgroundTransparency = 1
@@ -4293,7 +4293,7 @@ function mainapi:CreateCategory(categorysettings)
 				if outline then
 					outline.BackgroundTransparency = 1
 					outline.BorderSizePixel = 1
-					outline.BorderColor3 = Color3.new(1, 1, 1)
+					outline.BorderColor3 = Color3.fromRGB(235, 235, 240)
 				end
 				if fill then
 					fill.BackgroundColor3 = accent
@@ -4738,7 +4738,7 @@ function mainapi:UpdateFavoriteRow(name)
 			if outline then
 				outline.BackgroundTransparency = 1
 				outline.BorderSizePixel = 1
-				outline.BorderColor3 = Color3.fromRGB(112, 112, 124)
+				outline.BorderColor3 = Color3.fromRGB(62, 62, 70)
 			end
 			if fill then
 				fill.BackgroundTransparency = 1
@@ -4748,7 +4748,7 @@ function mainapi:UpdateFavoriteRow(name)
 			if outline then
 				outline.BackgroundTransparency = 1
 				outline.BorderSizePixel = 1
-				outline.BorderColor3 = Color3.new(1, 1, 1)
+				outline.BorderColor3 = Color3.fromRGB(235, 235, 240)
 			end
 			if fill then
 				fill.BackgroundColor3 = accent
@@ -4802,7 +4802,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	hiddenboxoutline.Size = UDim2.fromScale(1, 1)
 	hiddenboxoutline.BackgroundTransparency = 1
 	hiddenboxoutline.BorderSizePixel = 1
-	hiddenboxoutline.BorderColor3 = Color3.fromRGB(105, 105, 118)
+	hiddenboxoutline.BorderColor3 = Color3.fromRGB(62, 62, 70)
 	hiddenboxoutline.Parent = hiddenbox
 	local hiddenboxfill = Instance.new('Frame')
 	hiddenboxfill.Name = 'Fill'
