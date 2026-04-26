@@ -393,6 +393,37 @@ getcustomasset = assetfunction and function(path)
 
 	return getcustomassets[path] or ''
 end or function(path)
+
+local function decodeBase64(data)
+	local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+	data = data:gsub('[^'..b..'=]', '')
+	return (data:gsub('.', function(x)
+		if x == '=' then return '' end
+		local r, f = '', (b:find(x, 1, true) - 1)
+		for i = 6, 1, -1 do
+			r = r..((f % 2 ^ i - f % 2 ^ (i - 1) > 0) and '1' or '0')
+		end
+		return r
+	end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+		if #x ~= 8 then return '' end
+		local c = 0
+		for i = 1, 8 do
+			if x:sub(i, i) == '1' then
+				c = c + 2 ^ (8 - i)
+			end
+		end
+		return string.char(c)
+	end))
+end
+
+local function ensureEmbeddedAsset(path, b64data)
+	if not isfile(path) then
+		createDownloader(path)
+		writefile(path, decodeBase64(b64data))
+	end
+end
+
+ensureEmbeddedAsset('newvape/assets/new/hiddeneyeoff.png', 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAACTElEQVR4nIWSQUsbARCFv9ndxDXNaoMxJimuB7EXPVWoFhXcQPVgf60HsdQ220MMiN6E9iIIbdPaaKK7kJjdzU4PIYog9J2GYfiYmfekWqli2zZr62vaaDQkiRPGUtVRISAIz8kCyGQzWi6XqdVq6td9SZKE9XfrOlucRQxhMBgQBAHn5+fc3d49IUm1UgVgfn5eNzY3uO/fc3BwIJlMhm1vW6emprAsC1UlTVNarRaNRkPiKH4EGIbB5tamuq4LQLvdxvd9GSZDTNNkpjija2/XyDt5VJXOTYfPXz7L4H6AAbC6uqqu62KaJoYYFAoFdnd3dbx+61dLDj8eShiGmKbJbGmWnZ0dtSwLw3EcXXq9hGmaAFxfX/PV/4rjOHiep5lMBoB+r8/p6enDYwuFAouLi2psbG4wHtJU+f3nNzedG1FV5ubm2Puw9wDpdrqSpunodhGWV5Yx2n/bT+yyLIsoiuj1eogI+XwerzbaJI5jgiBAVVFVwjDEODs7k3FTRHBdF9MwaR436XQ6JElCsVhk78OeighHn44kDEPiOObk5GTkQrlcVq/mkc1mSdOUy8tLmsdNSZIEy7IolUrq1byRO3VfbNvW6qsq3799l4ccVKoV3drawrZtAKIo4urqChRmijPkcjlUlX6vz/7+vkRR9DRIAJOTk7xZfaOVSoWJiQlEHkM3HA65u70j9yJHEATUv9QljuOngLGy2SwLCws6/XIaJ+/Qvm7z88dPut2ulEolfb/znlarhV/35VnA/7SysqIXFxfS7/f5B5J9FTu5OOA9AAAAAElFTkSuQmCC')
 	return getcustomassets[path] or ''
 end
 
@@ -3959,47 +3990,13 @@ function mainapi:CreateCategory(categorysettings)
 	hiddenCountText.TextSize = 13
 	hiddenCountText.FontFace = uipallet.Font
 	hiddenCountText.Parent = hiddenCountFrame
-	local hiddenEye = Instance.new('Frame')
+	local hiddenEye = Instance.new('ImageLabel')
 	hiddenEye.Name = 'Eye'
-	hiddenEye.Size = UDim2.fromOffset(18, 18)
-	hiddenEye.Position = UDim2.fromOffset(16, 11)
+	hiddenEye.Size = UDim2.fromOffset(16, 14)
+	hiddenEye.Position = UDim2.fromOffset(17, 13)
 	hiddenEye.BackgroundTransparency = 1
+	hiddenEye.Image = getcustomasset('newvape/assets/new/hiddeneyeoff.png')
 	hiddenEye.Parent = hiddenCountFrame
-	local hiddenEyeShape = Instance.new('Frame')
-	hiddenEyeShape.Name = 'Shape'
-	hiddenEyeShape.Size = UDim2.fromOffset(15, 9)
-	hiddenEyeShape.Position = UDim2.fromOffset(1, 4)
-	hiddenEyeShape.BackgroundTransparency = 1
-	hiddenEyeShape.BorderSizePixel = 0
-	hiddenEyeShape.Parent = hiddenEye
-	local hiddenEyeCorner = Instance.new('UICorner')
-	hiddenEyeCorner.CornerRadius = UDim.new(1, 0)
-	hiddenEyeCorner.Parent = hiddenEyeShape
-	local hiddenEyeStroke = Instance.new('UIStroke')
-	hiddenEyeStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	hiddenEyeStroke.Thickness = 1.2
-	hiddenEyeStroke.Color = color.Light(uipallet.Main, 0.37)
-	hiddenEyeStroke.Transparency = 0
-	hiddenEyeStroke.Parent = hiddenEyeShape
-	local hiddenPupil = Instance.new('Frame')
-	hiddenPupil.Name = 'Pupil'
-	hiddenPupil.Size = UDim2.fromOffset(4, 4)
-	hiddenPupil.Position = UDim2.fromOffset(6, 6)
-	hiddenPupil.BackgroundColor3 = color.Light(uipallet.Main, 0.37)
-	hiddenPupil.BorderSizePixel = 0
-	hiddenPupil.Parent = hiddenEye
-	local hiddenPupilCorner = Instance.new('UICorner')
-	hiddenPupilCorner.CornerRadius = UDim.new(1, 0)
-	hiddenPupilCorner.Parent = hiddenPupil
-	local hiddenSlash = Instance.new('Frame')
-	hiddenSlash.Name = 'Slash'
-	hiddenSlash.Size = UDim2.fromOffset(16, 2)
-	hiddenSlash.Position = UDim2.fromOffset(2, 9)
-	hiddenSlash.BackgroundColor3 = color.Light(uipallet.Main, 0.37)
-	hiddenSlash.BorderSizePixel = 0
-	hiddenSlash.Rotation = -38
-	hiddenSlash.ZIndex = 3
-	hiddenSlash.Parent = hiddenEye
 
 	local children = Instance.new('ScrollingFrame')
 	children.Name = 'Children'
