@@ -3975,7 +3975,7 @@ function mainapi:CreateCategory(categorysettings)
 	local hiddenCountFrame = Instance.new('Frame')
 	hiddenCountFrame.Name = 'HiddenCount'
 	hiddenCountFrame.Size = UDim2.fromOffset(40, 40)
-	hiddenCountFrame.Position = UDim2.new(1, -74, 0, 0)
+	hiddenCountFrame.Position = UDim2.new(1, -60, 0, 0)
 	hiddenCountFrame.BackgroundTransparency = 1
 	hiddenCountFrame.Visible = false
 	hiddenCountFrame.Parent = window
