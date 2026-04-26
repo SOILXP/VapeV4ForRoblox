@@ -4205,9 +4205,11 @@ function mainapi:CreateCategory(categorysettings)
 		hiddenbox.Text = ''
 		hiddenbox.Parent = modulebutton
 		local hiddenboxstroke = Instance.new('UIStroke')
-		hiddenboxstroke.Thickness = 1
-		hiddenboxstroke.Color = color.Light(uipallet.Main, 0.14)
-		hiddenboxstroke.Parent = hiddenbox
+		hiddenboxstroke.Thickness = 1.15
+		hiddenboxstroke.Color = Color3.fromRGB(105, 105, 118)
+hiddenboxstroke.Transparency = 0
+pcall(function() hiddenboxstroke.LineJoinMode = Enum.LineJoinMode.Miter end)
+hiddenboxstroke.Parent = hiddenbox
 		addTooltip(hiddenbox, 'Show / hide module')
 
 		modulechildren.Name = modulesettings.Name..'Children'
@@ -4247,8 +4249,8 @@ function mainapi:CreateCategory(categorysettings)
 				-- Hidden/off state: empty square with no fill, matching Vape's outline-only look.
 				hiddenbox.BackgroundTransparency = 1
 				hiddenbox.BackgroundColor3 = uipallet.Main
-				hiddenboxstroke.Color = color.Dark(uipallet.Text, 0.35)
-				hiddenboxstroke.Transparency = 0.25
+				hiddenboxstroke.Color = Color3.fromRGB(105, 105, 118)
+hiddenboxstroke.Transparency = 0
 			else
 				-- Visible/on state: solid accent/rainbow square with a clean outline.
 				hiddenbox.BackgroundTransparency = 0
@@ -4692,8 +4694,8 @@ function mainapi:UpdateFavoriteRow(name)
 			hiddenbox.BackgroundTransparency = 1
 			hiddenbox.BackgroundColor3 = uipallet.Main
 			if stroke then
-				stroke.Color = color.Dark(uipallet.Text, 0.35)
-				stroke.Transparency = 0.25
+				stroke.Color = Color3.fromRGB(105, 105, 118)
+stroke.Transparency = 0
 			end
 		else
 			hiddenbox.BackgroundTransparency = 0
@@ -4747,9 +4749,11 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	hiddenbox.Text = ''
 	hiddenbox.Parent = row
 	local hiddenboxstroke = Instance.new('UIStroke')
-	hiddenboxstroke.Thickness = 1
-	hiddenboxstroke.Color = color.Light(uipallet.Main, 0.14)
-	hiddenboxstroke.Parent = hiddenbox
+	hiddenboxstroke.Thickness = 1.15
+	hiddenboxstroke.Color = Color3.fromRGB(105, 105, 118)
+hiddenboxstroke.Transparency = 0
+pcall(function() hiddenboxstroke.LineJoinMode = Enum.LineJoinMode.Miter end)
+hiddenboxstroke.Parent = hiddenbox
 	addTooltip(hiddenbox, 'Show / hide module')
 
 	local star = Instance.new('TextButton')
