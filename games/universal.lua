@@ -1,6 +1,3 @@
---// universal.lua - fixed init/order version
---// Fixes the nil call around entitylib.targetCheck by defining helpers + whitelist methods BEFORE entitylib can call them.
-
 local oldloadstring = loadstring
 local vape
 
