@@ -2,7 +2,6 @@ local mainapi = {
 	Categories = {},
 	Indicators = {},
 	Favorites = {List = {}, Rows = {}},
-	EnabledModules = {Rows = {}},
 	Hidden = {List = {}, Editing = false},
 	GUIColor = {
 		Hue = 0.46,
@@ -3035,58 +3034,6 @@ function mainapi:CreateGUI()
 		mainapi.Favorites.StarButton = favoritesButton
 		mainapi.Favorites.WaitingForOverlayBar = nil
 		mainapi:UpdateFavoritesButton()
-
-		local enabledButton = Instance.new('TextButton')
-		enabledButton.Name = 'EnabledButton'
-		enabledButton.Size = UDim2.fromOffset(28, 28)
-		enabledButton.Position = UDim2.new(1, -94, 0, 4)
-		enabledButton.BackgroundTransparency = 1
-		enabledButton.AutoButtonColor = false
-		enabledButton.Text = ''
-		enabledButton.Parent = bar
-		addTooltip(enabledButton, 'Open enabled modules')
-		local enabledCircle = Instance.new('Frame')
-		enabledCircle.Name = 'Circle'
-		enabledCircle.Size = UDim2.fromOffset(14, 14)
-		enabledCircle.Position = UDim2.fromOffset(7, 8)
-		enabledCircle.BackgroundTransparency = 1
-		enabledCircle.Parent = enabledButton
-		addCorner(enabledCircle, UDim.new(1, 0))
-		local enabledCircleStroke = Instance.new('UIStroke')
-		enabledCircleStroke.Thickness = 1.7
-		enabledCircleStroke.Color = Color3.fromRGB(118, 118, 126)
-		enabledCircleStroke.Parent = enabledCircle
-		local enabledLine = Instance.new('Frame')
-		enabledLine.Name = 'Line'
-		enabledLine.Size = UDim2.fromOffset(2, 8)
-		enabledLine.Position = UDim2.fromOffset(13, 4)
-		enabledLine.BackgroundColor3 = Color3.fromRGB(118, 118, 126)
-		enabledLine.BorderSizePixel = 0
-		enabledLine.Parent = enabledButton
-		addCorner(enabledLine, UDim.new(1, 0))
-
-		enabledButton.MouseEnter:Connect(function()
-			mainapi.EnabledModules.PowerButtonHovered = true
-			mainapi:UpdateEnabledButton()
-		end)
-		enabledButton.MouseLeave:Connect(function()
-			mainapi.EnabledModules.PowerButtonHovered = false
-			mainapi:UpdateEnabledButton()
-		end)
-		enabledButton.MouseButton1Click:Connect(function()
-			mainapi:PulseStar(enabledButton)
-			local enabledcat = mainapi.Categories.Enabled
-			if not enabledcat or not enabledcat.Button then return end
-			enabledcat.Button:Toggle()
-			if enabledcat.Button.Enabled and not enabledcat.Expanded then
-				enabledcat:Expand()
-			end
-			mainapi:RefreshEnabledModules()
-			mainapi:UpdateEnabledButton()
-		end)
-
-		mainapi.EnabledModules.PowerButton = enabledButton
-		mainapi:UpdateEnabledButton()
 		local shadow = Instance.new('TextButton')
 		shadow.Name = 'Shadow'
 		shadow.Size = UDim2.new(1, 0, 1, -5)
@@ -4488,7 +4435,6 @@ function mainapi:CreateCategory(categorysettings)
 				mainapi:UpdateTextGUI()
 			end
 			mainapi:UpdateFavoriteRow(self.Name)
-			if mainapi.RefreshEnabledModules then mainapi:RefreshEnabledModules() end
 			if self.ApplyHiddenState then self:ApplyHiddenState() end
 			if disabled then return end
 			task.spawn(modulesettings.Function, self.Enabled)
@@ -4853,36 +4799,11 @@ function mainapi:PulseImage(image)
 	end)
 end
 
-function mainapi:AnimatePowerColor(button, active, hover)
-	if not button then return end
-	local target = active and mainapi:GetPinAccentColor({Index = 1}) or (hover and Color3.fromRGB(205, 205, 215) or Color3.fromRGB(118, 118, 126))
-	local circle = button:FindFirstChild('Circle')
-	local line = button:FindFirstChild('Line')
-	local stroke = circle and circle:FindFirstChildOfClass('UIStroke')
-	if stroke then
-		tween:Tween(stroke, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Color = target
-		})
-	end
-	if line then
-		tween:Tween(line, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundColor3 = target
-		})
-	end
-end
-
 function mainapi:UpdateFavoritesButton()
 	if not self.Favorites or not self.Favorites.StarButton then return end
 	local fav = self.Categories and self.Categories.Favorites
 	local open = fav and fav.Button and fav.Button.Enabled
 	self:AnimateStarColor(self.Favorites.StarButton, open, self.Favorites.StarButtonHovered)
-end
-
-function mainapi:UpdateEnabledButton()
-	if not self.EnabledModules or not self.EnabledModules.PowerButton then return end
-	local enabledcat = self.Categories and self.Categories.Enabled
-	local open = enabledcat and enabledcat.Button and enabledcat.Button.Enabled
-	self:AnimatePowerColor(self.EnabledModules.PowerButton, open, self.EnabledModules.PowerButtonHovered)
 end
 
 function mainapi:UpdateFavoriteRow(name)
@@ -4934,156 +4855,6 @@ function mainapi:UpdateFavoriteRow(name)
 	end
 end
 
-function mainapi:UpdateEnabledRow(name)
-	if not self.EnabledModules or not self.EnabledModules.Rows then return end
-	local row = self.EnabledModules.Rows[name]
-	local moduleapi = self.Modules[name]
-	if not row or not moduleapi then return end
-	local editingHidden = self.Hidden and self.Hidden.Editing
-	local hidden = self:IsHidden(name)
-	row.Visible = moduleapi.Enabled and (editingHidden or not hidden)
-	row.Text = '                  '..moduleapi.Name:gsub(' ', '')
-	row.TextColor3 = uipallet.Text
-	row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
-end
-
-function mainapi:CreateEnabledRow(moduleapi)
-	local enabledcat = self.Categories and self.Categories.Enabled
-	if not enabledcat or not enabledcat.Children or not moduleapi then return end
-	self.EnabledModules.Rows = self.EnabledModules.Rows or {}
-	if self.EnabledModules.Rows[moduleapi.Name] then return end
-
-	local row = Instance.new('TextButton')
-	row.Name = moduleapi.Name
-	row.Size = UDim2.fromOffset(220, 40)
-	row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
-	row.BorderSizePixel = 0
-	row.AutoButtonColor = false
-	row.Text = '                  '..moduleapi.Name:gsub(' ', '')
-	row.TextXAlignment = Enum.TextXAlignment.Left
-	row.TextColor3 = uipallet.Text
-	row.TextSize = 14
-	row.FontFace = uipallet.Font
-	row.Parent = enabledcat.Children
-	addTooltip(row, 'Enabled: '..moduleapi.Name)
-
-	local power = Instance.new('Frame')
-	power.Name = 'Power'
-	power.Size = UDim2.fromOffset(14, 14)
-	power.Position = UDim2.fromOffset(20, 13)
-	power.BackgroundTransparency = 1
-	power.Parent = row
-	local powerCircle = Instance.new('Frame')
-	powerCircle.Name = 'Circle'
-	powerCircle.Size = UDim2.fromOffset(10, 10)
-	powerCircle.Position = UDim2.fromOffset(2, 3)
-	powerCircle.BackgroundTransparency = 1
-	powerCircle.Parent = power
-	addCorner(powerCircle, UDim.new(1, 0))
-	local powerCircleStroke = Instance.new('UIStroke')
-	powerCircleStroke.Thickness = 1.35
-	powerCircleStroke.Color = self:GetPinAccentColor(moduleapi)
-	powerCircleStroke.Parent = powerCircle
-	local powerLine = Instance.new('Frame')
-	powerLine.Name = 'Line'
-	powerLine.Size = UDim2.fromOffset(2, 7)
-	powerLine.Position = UDim2.fromOffset(6, 0)
-	powerLine.BackgroundColor3 = self:GetPinAccentColor(moduleapi)
-	powerLine.BorderSizePixel = 0
-	powerLine.Parent = power
-	addCorner(powerLine, UDim.new(1, 0))
-
-	local dotsbutton = Instance.new('TextButton')
-	dotsbutton.Name = 'DotsButton'
-	dotsbutton.Size = UDim2.fromOffset(25, 40)
-	dotsbutton.Position = UDim2.new(1, -25, 0, 0)
-	dotsbutton.BackgroundTransparency = 1
-	dotsbutton.AutoButtonColor = false
-	dotsbutton.Text = ''
-	dotsbutton.Parent = row
-	local dots = Instance.new('ImageLabel')
-	dots.Name = 'Dots'
-	dots.Size = UDim2.fromOffset(3, 16)
-	dots.Position = UDim2.fromOffset(4, 12)
-	dots.BackgroundTransparency = 1
-	dots.Image = getcustomasset('newvape/assets/new/dots.png')
-	dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
-	dots.Parent = dotsbutton
-
-	local rowClickGuard = false
-	dotsbutton.MouseButton1Down:Connect(function()
-		rowClickGuard = true
-	end)
-	dotsbutton.MouseButton1Click:Connect(function()
-		if self.Hidden and self.Hidden.Editing then return end
-		if moduleapi.SetChildrenVisible then
-			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
-		end
-		rowClickGuard = false
-	end)
-
-	row.MouseEnter:Connect(function()
-		row.TextColor3 = uipallet.Text
-		row.BackgroundColor3 = color.Light(uipallet.Main, 0.035)
-		dots.ImageColor3 = uipallet.Text
-	end)
-	row.MouseLeave:Connect(function()
-		row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
-		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
-	end)
-	row.MouseButton1Click:Connect(function()
-		if self.Hidden and self.Hidden.Editing then return end
-		if rowClickGuard then
-			rowClickGuard = false
-			return
-		end
-		moduleapi:Toggle()
-		self:RefreshEnabledModules()
-	end)
-	row.MouseButton2Click:Connect(function()
-		if self.Hidden and self.Hidden.Editing then return end
-		if moduleapi.SetChildrenVisible then
-			moduleapi:SetChildrenVisible(not moduleapi.Children.Visible)
-		end
-	end)
-
-	self.EnabledModules.Rows[moduleapi.Name] = row
-	self:UpdateEnabledRow(moduleapi.Name)
-end
-
-function mainapi:RefreshEnabledModules()
-	self.EnabledModules = self.EnabledModules or {Rows = {}}
-	self.EnabledModules.Rows = self.EnabledModules.Rows or {}
-
-	for name, row in self.EnabledModules.Rows do
-		if not self.Modules[name] or not self.Modules[name].Enabled then
-			row:Destroy()
-			self.EnabledModules.Rows[name] = nil
-		end
-	end
-
-	local enabled = {}
-	for name, moduleapi in self.Modules do
-		if moduleapi.Enabled then
-			table.insert(enabled, name)
-		end
-	end
-	table.sort(enabled)
-
-	for order, name in enabled do
-		local moduleapi = self.Modules[name]
-		if moduleapi then
-			self:CreateEnabledRow(moduleapi)
-			if self.EnabledModules.Rows[name] then
-				self.EnabledModules.Rows[name].LayoutOrder = order
-			end
-			self:UpdateEnabledRow(name)
-		end
-	end
-
-	self:UpdateEnabledButton()
-end
-
 function mainapi:CreateFavoriteRow(moduleapi)
 	local fav = self.Categories and self.Categories.Favorites
 	if not fav or not fav.Children or not moduleapi then return end
@@ -5096,7 +4867,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	row.BackgroundColor3 = uipallet.Main
 	row.BorderSizePixel = 0
 	row.AutoButtonColor = false
-	row.Text = '                  '..moduleapi.Name:gsub(' ', '')
+	row.Text = '            '..moduleapi.Name:gsub(' ', '')
 	row.TextXAlignment = Enum.TextXAlignment.Left
 	row.TextColor3 = color.Dark(uipallet.Text, 0.16)
 	row.TextSize = 14
@@ -5286,7 +5057,6 @@ function mainapi:RefreshFavorites()
 	end
 
 	self:UpdateFavoritesButton()
-if self.UpdateEnabledButton then self:UpdateEnabledButton() end
 end
 
 function mainapi:SetFavorite(name, state, skipSave)
@@ -5445,9 +5215,6 @@ function mainapi:UpdateHiddenModule(name)
 	if self.Favorites and self.Favorites.Rows and self.Favorites.Rows[name] then
 		self:UpdateFavoriteRow(name)
 	end
-	if self.EnabledModules and self.EnabledModules.Rows and self.EnabledModules.Rows[name] then
-		self:UpdateEnabledRow(name)
-	end
 end
 
 function mainapi:RefreshHiddenModules()
@@ -5466,11 +5233,6 @@ function mainapi:RefreshHiddenModules()
 	if self.Favorites and self.Favorites.Rows then
 		for name in self.Favorites.Rows do
 			self:UpdateFavoriteRow(name)
-		end
-	end
-	if self.EnabledModules and self.EnabledModules.Rows then
-		for name in self.EnabledModules.Rows do
-			self:UpdateEnabledRow(name)
 		end
 	end
 	self:UpdateHiddenHeaders()
@@ -7805,10 +7567,6 @@ function mainapi:Load(skipgui, profile, profiledata)
 			end
 		end
 
-		if self.RefreshEnabledModules then
-			self:RefreshEnabledModules()
-		end
-
 		if savedata.Favorites then
 			self.Favorites.List = savedata.Favorites or {}
 			for name, moduleapi in self.Modules do
@@ -8221,13 +7979,6 @@ mainapi:CreateCategory({
 	Size = UDim2.fromOffset(17, 17),
 	HiddenButton = true,
 	StarIcon = true
-})
-mainapi:CreateCategory({
-	Name = 'Enabled',
-	Icon = '',
-	Size = UDim2.fromOffset(17, 17),
-	HiddenButton = true,
-	PowerIcon = true
 })
 mainapi.Categories.Main:CreateDivider('misc')
 
@@ -9398,9 +9149,6 @@ function mainapi:UpdateGUI(hue, sat, val, default)
 		end
 		if button.UpdatePinVisual then
 			button:UpdatePinVisual()
-		end
-		if mainapi.EnabledModules and mainapi.EnabledModules.Rows and mainapi.EnabledModules.Rows[button.Name] then
-			mainapi:UpdateEnabledRow(button.Name)
 		end
 
 		for _, option in button.Options do
