@@ -3986,8 +3986,8 @@ function mainapi:CreateCategory(categorysettings)
 	hiddenCountText.Parent = hiddenCountFrame
 	local hiddenEye = Instance.new('ImageLabel')
 	hiddenEye.Name = 'Eye'
-	hiddenEye.Size = UDim2.fromOffset(16, 16)
-	hiddenEye.Position = UDim2.fromOffset(16, 12)
+	hiddenEye.Size = UDim2.fromOffset(18, 18)
+	hiddenEye.Position = UDim2.fromOffset(15, 11)
 	hiddenEye.BackgroundTransparency = 1
 	hiddenEye.Image = getcustomasset('newvape/assets/new/hiddeneyeoff.png')
 	hiddenEye.ImageColor3 = Color3.fromRGB(118, 118, 126)
