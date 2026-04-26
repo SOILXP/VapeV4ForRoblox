@@ -3001,8 +3001,8 @@ function mainapi:CreateGUI()
 
 		local favoritesButton = Instance.new('ImageButton')
 		favoritesButton.Name = 'FavoritesButton'
-		favoritesButton.Size = UDim2.fromOffset(16, 16)
-		favoritesButton.Position = UDim2.new(1, -50, 0, 13)
+		favoritesButton.Size = UDim2.fromOffset(20, 20)
+		favoritesButton.Position = UDim2.new(1, -51, 0, 9)
 		favoritesButton.BackgroundTransparency = 1
 		favoritesButton.AutoButtonColor = false
 		favoritesButton.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
