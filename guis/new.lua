@@ -3042,12 +3042,28 @@ function mainapi:CreateGUI()
 		enabledButton.Position = UDim2.new(1, -94, 0, 4)
 		enabledButton.BackgroundTransparency = 1
 		enabledButton.AutoButtonColor = false
-		enabledButton.Text = '⏻'
-		enabledButton.TextSize = 20
-		enabledButton.FontFace = uipallet.FontSemiBold
-		enabledButton.TextColor3 = Color3.fromRGB(118, 118, 126)
+		enabledButton.Text = ''
 		enabledButton.Parent = bar
 		addTooltip(enabledButton, 'Open enabled modules')
+		local enabledCircle = Instance.new('Frame')
+		enabledCircle.Name = 'Circle'
+		enabledCircle.Size = UDim2.fromOffset(14, 14)
+		enabledCircle.Position = UDim2.fromOffset(7, 8)
+		enabledCircle.BackgroundTransparency = 1
+		enabledCircle.Parent = enabledButton
+		addCorner(enabledCircle, UDim.new(1, 0))
+		local enabledCircleStroke = Instance.new('UIStroke')
+		enabledCircleStroke.Thickness = 1.7
+		enabledCircleStroke.Color = Color3.fromRGB(118, 118, 126)
+		enabledCircleStroke.Parent = enabledCircle
+		local enabledLine = Instance.new('Frame')
+		enabledLine.Name = 'Line'
+		enabledLine.Size = UDim2.fromOffset(2, 8)
+		enabledLine.Position = UDim2.fromOffset(13, 4)
+		enabledLine.BackgroundColor3 = Color3.fromRGB(118, 118, 126)
+		enabledLine.BorderSizePixel = 0
+		enabledLine.Parent = enabledButton
+		addCorner(enabledLine, UDim.new(1, 0))
 
 		enabledButton.MouseEnter:Connect(function()
 			mainapi.EnabledModules.PowerButtonHovered = true
@@ -4840,9 +4856,19 @@ end
 function mainapi:AnimatePowerColor(button, active, hover)
 	if not button then return end
 	local target = active and mainapi:GetPinAccentColor({Index = 1}) or (hover and Color3.fromRGB(205, 205, 215) or Color3.fromRGB(118, 118, 126))
-	tween:Tween(button, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		TextColor3 = target
-	})
+	local circle = button:FindFirstChild('Circle')
+	local line = button:FindFirstChild('Line')
+	local stroke = circle and circle:FindFirstChildOfClass('UIStroke')
+	if stroke then
+		tween:Tween(stroke, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Color = target
+		})
+	end
+	if line then
+		tween:Tween(line, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundColor3 = target
+		})
+	end
 end
 
 function mainapi:UpdateFavoritesButton()
@@ -4916,7 +4942,7 @@ function mainapi:UpdateEnabledRow(name)
 	local editingHidden = self.Hidden and self.Hidden.Editing
 	local hidden = self:IsHidden(name)
 	row.Visible = moduleapi.Enabled and (editingHidden or not hidden)
-	row.Text = '            '..moduleapi.Name:gsub(' ', '')
+	row.Text = '                  '..moduleapi.Name:gsub(' ', '')
 	row.TextColor3 = uipallet.Text
 	row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
 end
@@ -4933,7 +4959,7 @@ function mainapi:CreateEnabledRow(moduleapi)
 	row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
 	row.BorderSizePixel = 0
 	row.AutoButtonColor = false
-	row.Text = '            '..moduleapi.Name:gsub(' ', '')
+	row.Text = '                  '..moduleapi.Name:gsub(' ', '')
 	row.TextXAlignment = Enum.TextXAlignment.Left
 	row.TextColor3 = uipallet.Text
 	row.TextSize = 14
@@ -4941,27 +4967,48 @@ function mainapi:CreateEnabledRow(moduleapi)
 	row.Parent = enabledcat.Children
 	addTooltip(row, 'Enabled: '..moduleapi.Name)
 
-	local power = Instance.new('TextLabel')
+	local power = Instance.new('Frame')
 	power.Name = 'Power'
-	power.Size = UDim2.fromOffset(22, 40)
-	power.Position = UDim2.fromOffset(13, 0)
+	power.Size = UDim2.fromOffset(14, 14)
+	power.Position = UDim2.fromOffset(20, 13)
 	power.BackgroundTransparency = 1
-	power.Text = '⏻'
-	power.TextSize = 14
-	power.FontFace = uipallet.FontSemiBold
-	power.TextColor3 = self:GetPinAccentColor(moduleapi)
 	power.Parent = row
+	local powerCircle = Instance.new('Frame')
+	powerCircle.Name = 'Circle'
+	powerCircle.Size = UDim2.fromOffset(10, 10)
+	powerCircle.Position = UDim2.fromOffset(2, 3)
+	powerCircle.BackgroundTransparency = 1
+	powerCircle.Parent = power
+	addCorner(powerCircle, UDim.new(1, 0))
+	local powerCircleStroke = Instance.new('UIStroke')
+	powerCircleStroke.Thickness = 1.35
+	powerCircleStroke.Color = self:GetPinAccentColor(moduleapi)
+	powerCircleStroke.Parent = powerCircle
+	local powerLine = Instance.new('Frame')
+	powerLine.Name = 'Line'
+	powerLine.Size = UDim2.fromOffset(2, 7)
+	powerLine.Position = UDim2.fromOffset(6, 0)
+	powerLine.BackgroundColor3 = self:GetPinAccentColor(moduleapi)
+	powerLine.BorderSizePixel = 0
+	powerLine.Parent = power
+	addCorner(powerLine, UDim.new(1, 0))
 
-	local dotsbutton = Instance.new('ImageButton')
+	local dotsbutton = Instance.new('TextButton')
 	dotsbutton.Name = 'DotsButton'
-	dotsbutton.Size = UDim2.fromOffset(20, 20)
-	dotsbutton.Position = UDim2.new(1, -31, 0, 10)
-	dotsbutton.AnchorPoint = Vector2.new(1, 0)
+	dotsbutton.Size = UDim2.fromOffset(25, 40)
+	dotsbutton.Position = UDim2.new(1, -25, 0, 0)
 	dotsbutton.BackgroundTransparency = 1
 	dotsbutton.AutoButtonColor = false
-	dotsbutton.Image = getcustomasset('newvape/assets/new/dots.png')
-	dotsbutton.ImageColor3 = color.Light(uipallet.Main, 0.37)
+	dotsbutton.Text = ''
 	dotsbutton.Parent = row
+	local dots = Instance.new('ImageLabel')
+	dots.Name = 'Dots'
+	dots.Size = UDim2.fromOffset(3, 16)
+	dots.Position = UDim2.fromOffset(4, 12)
+	dots.BackgroundTransparency = 1
+	dots.Image = getcustomasset('newvape/assets/new/dots.png')
+	dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
+	dots.Parent = dotsbutton
 
 	local rowClickGuard = false
 	dotsbutton.MouseButton1Down:Connect(function()
@@ -4978,11 +5025,11 @@ function mainapi:CreateEnabledRow(moduleapi)
 	row.MouseEnter:Connect(function()
 		row.TextColor3 = uipallet.Text
 		row.BackgroundColor3 = color.Light(uipallet.Main, 0.035)
-		dotsbutton.ImageColor3 = uipallet.Text
+		dots.ImageColor3 = uipallet.Text
 	end)
 	row.MouseLeave:Connect(function()
 		row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
-		dotsbutton.ImageColor3 = color.Light(uipallet.Main, 0.37)
+		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 	end)
 	row.MouseButton1Click:Connect(function()
 		if self.Hidden and self.Hidden.Editing then return end
@@ -5049,7 +5096,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	row.BackgroundColor3 = uipallet.Main
 	row.BorderSizePixel = 0
 	row.AutoButtonColor = false
-	row.Text = '            '..moduleapi.Name:gsub(' ', '')
+	row.Text = '                  '..moduleapi.Name:gsub(' ', '')
 	row.TextXAlignment = Enum.TextXAlignment.Left
 	row.TextColor3 = color.Dark(uipallet.Text, 0.16)
 	row.TextSize = 14
