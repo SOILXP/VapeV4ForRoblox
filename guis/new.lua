@@ -4197,14 +4197,14 @@ function mainapi:CreateCategory(categorysettings)
 		dots.Parent = dotsbutton
 		local favoritebutton = Instance.new('TextButton')
 		favoritebutton.Name = 'Favorite'
-		favoritebutton.Size = UDim2.fromOffset(20, 21)
-		favoritebutton.Position = UDim2.new(1, -60, 0, 9)
+		favoritebutton.Size = UDim2.fromOffset(22, 22)
+		favoritebutton.Position = UDim2.new(1, -61, 0, 8)
 		favoritebutton.AnchorPoint = Vector2.new(1, 0)
 		favoritebutton.BackgroundTransparency = 1
 		favoritebutton.AutoButtonColor = false
 		favoritebutton.Visible = false
 		favoritebutton.Text = '★'
-		favoritebutton.TextSize = 18
+		favoritebutton.TextSize = 22
 		favoritebutton.FontFace = uipallet.FontSemiBold
 		favoritebutton.TextColor3 = color.Light(uipallet.Main, 0.37)
 		favoritebutton.Parent = modulebutton
@@ -8057,7 +8057,7 @@ mainapi:CreateCategory({
 mainapi:CreateCategory({
 	Name = 'Favorites',
 	Icon = '',
-	Size = UDim2.fromOffset(17, 17),
+	Size = UDim2.fromOffset(19, 19),
 	HiddenButton = true,
 	StarIcon = true
 })
