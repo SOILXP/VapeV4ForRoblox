@@ -2939,45 +2939,10 @@ function mainapi:CreateGUI()
 	end
 
 	function categoryapi:CreateFavoritesBar()
-		local bar = Instance.new('Frame')
-		bar.Name = 'FavoritesBar'
-		bar.Size = UDim2.fromOffset(220, 36)
-		bar.BackgroundColor3 = uipallet.Main
-		bar.BorderSizePixel = 0
-		bar.Parent = children
-
-		local button = Instance.new('TextButton')
-		button.Name = 'FavoritesButton'
-		button.Size = UDim2.fromOffset(32, 32)
-		button.Position = UDim2.fromOffset(12, 2)
-		button.BackgroundTransparency = 1
-		button.AutoButtonColor = false
-		button.Text = '★'
-		button.TextSize = 22
-		button.FontFace = uipallet.FontSemiBold
-		button.TextColor3 = color.Light(uipallet.Main, 0.37)
-		button.Parent = bar
-		addTooltip(button, 'Open favorites')
-
-		button.MouseEnter:Connect(function()
-			button.TextColor3 = Color3.fromRGB(255, 170, 42)
-		end)
-		button.MouseLeave:Connect(function()
-			mainapi:UpdateFavoritesButton()
-		end)
-		button.MouseButton1Click:Connect(function()
-			local fav = mainapi.Categories.Favorites
-			if not fav or not fav.Button then return end
-			fav.Button:Toggle()
-			if fav.Button.Enabled and not fav.Expanded then
-				fav:Expand()
-			end
-			mainapi:UpdateFavoritesButton()
-		end)
-
-		mainapi.Favorites.StarButton = button
-		mainapi:UpdateFavoritesButton()
-		return button
+		-- Favorites is visually mounted inside the bottom overlays bar, like real Vape.
+		-- This stub keeps the old call order safe without creating an extra row.
+		mainapi.Favorites.WaitingForOverlayBar = true
+		return nil
 	end
 
 	function categoryapi:CreateOverlayBar()
@@ -3000,6 +2965,39 @@ function mainapi:CreateGUI()
 		button.Parent = bar
 		addCorner(button, UDim.new(1, 0))
 		addTooltip(button, 'Open overlays menu')
+
+		local favoritesButton = Instance.new('TextButton')
+		favoritesButton.Name = 'FavoritesButton'
+		favoritesButton.Size = UDim2.fromOffset(28, 28)
+		favoritesButton.Position = UDim2.new(1, -64, 0, 4)
+		favoritesButton.BackgroundTransparency = 1
+		favoritesButton.AutoButtonColor = false
+		favoritesButton.Text = '★'
+		favoritesButton.TextSize = 24
+		favoritesButton.FontFace = uipallet.FontSemiBold
+		favoritesButton.TextColor3 = color.Light(uipallet.Main, 0.37)
+		favoritesButton.Parent = bar
+		addTooltip(favoritesButton, 'Open favorites')
+
+		favoritesButton.MouseEnter:Connect(function()
+			mainapi:UpdateFavoritesButton()
+		end)
+		favoritesButton.MouseLeave:Connect(function()
+			mainapi:UpdateFavoritesButton()
+		end)
+		favoritesButton.MouseButton1Click:Connect(function()
+			local fav = mainapi.Categories.Favorites
+			if not fav or not fav.Button then return end
+			fav.Button:Toggle()
+			if fav.Button.Enabled and not fav.Expanded then
+				fav:Expand()
+			end
+			mainapi:UpdateFavoritesButton()
+		end)
+
+		mainapi.Favorites.StarButton = favoritesButton
+		mainapi.Favorites.WaitingForOverlayBar = nil
+		mainapi:UpdateFavoritesButton()
 		local shadow = Instance.new('TextButton')
 		shadow.Name = 'Shadow'
 		shadow.Size = UDim2.new(1, 0, 1, -5)
@@ -4458,6 +4456,9 @@ function mainapi:CreateCategory(categorysettings)
 				if not buttonapi.Enabled then
 					divider.Visible = false
 				end
+				if categorysettings.Name == 'Favorites' then
+					mainapi:UpdateFavoritesButton()
+				end
 			end
 		}
 	else
@@ -4482,9 +4483,8 @@ end
 function mainapi:UpdateFavoritesButton()
 	if not self.Favorites or not self.Favorites.StarButton then return end
 	local fav = self.Categories and self.Categories.Favorites
-	local hasFavorites = self.Favorites.List and #self.Favorites.List > 0
 	local open = fav and fav.Button and fav.Button.Enabled
-	self.Favorites.StarButton.TextColor3 = (hasFavorites or open) and Color3.fromRGB(255, 170, 42) or color.Light(uipallet.Main, 0.37)
+	self.Favorites.StarButton.TextColor3 = open and Color3.fromRGB(255, 170, 42) or color.Light(uipallet.Main, 0.37)
 end
 
 function mainapi:UpdateFavoriteRow(name)
@@ -4656,19 +4656,6 @@ function mainapi:RefreshFavorites()
 		end
 	end
 
-	local fav = self.Categories and self.Categories.Favorites
-	if fav then
-		if #self.Favorites.List > 0 then
-			if not fav.Button.Enabled then
-				fav.Button:Toggle()
-			end
-			if not fav.Expanded then
-				fav:Expand()
-			end
-		elseif fav.Button.Enabled then
-			fav.Button:Toggle()
-		end
-	end
 	self:UpdateFavoritesButton()
 end
 
@@ -7310,7 +7297,7 @@ task.spawn(function()
 	repeat
 		task.wait()
 	until mainapi.Loaded
-	loadingText.Text = 'Thank you for choosing Vape!\nScript is fully loaded'
+	loadingText:Destroy()
 end)
 
 mainapi:Clean(gui:GetPropertyChangedSignal('AbsoluteSize'):Connect(function()
