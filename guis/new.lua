@@ -22,6 +22,7 @@ local mainapi = {
 	RainbowUpdateSpeed = {Value = 60},
 	RainbowTable = {},
 	Scale = {Value = 1},
+	Theme = {Hue = 0, Saturation = 0, Brightness = 10, Text = 200, Border = 45, Contrast = 2},
 	ThreadFix = setthreadidentity and true or false,
 	ToggleNotifications = {},
 	Version = '6.00',
@@ -616,6 +617,116 @@ do
 	function color.Light(col, num)
 		local h, s, v = col:ToHSV()
 		return Color3.fromHSV(h, s, math.clamp(select(3, uipallet.Main:ToHSV()) > 0.5 and v - num or v + num, 0, 1))
+	end
+
+	function mainapi:IsNeutralColor(col)
+		local r, g, b = col.R, col.G, col.B
+		return math.max(r, g, b) - math.min(r, g, b) < 0.08
+	end
+
+	function mainapi:GetThemeValue(option, fallback)
+		return option and option.Value or fallback
+	end
+
+	function mainapi:GetThemeBaseColor()
+		if not (self.CustomTheme and self.CustomTheme.Enabled) then
+			return Color3.fromRGB(26, 25, 26)
+		end
+
+		local hue = (self:GetThemeValue(self.ThemeHue, 0) % 360) / 360
+		local sat = math.clamp(self:GetThemeValue(self.ThemeSaturation, 0) / 100, 0, 1)
+		local val = math.clamp(self:GetThemeValue(self.ThemeBrightness, 10) / 100, 0.02, 0.45)
+		return Color3.fromHSV(hue, sat, val)
+	end
+
+	function mainapi:GetThemeTextColor()
+		if not (self.CustomTheme and self.CustomTheme.Enabled) then
+			return Color3.fromRGB(200, 200, 200)
+		end
+
+		local textValue = math.clamp(math.floor(self:GetThemeValue(self.ThemeTextBrightness, 200)), 80, 255)
+		return Color3.fromRGB(textValue, textValue, textValue)
+	end
+
+	function mainapi:GetThemeBorderColor()
+		local borderValue = math.clamp(math.floor(self:GetThemeValue(self.ThemeBorderBrightness, 45)), 0, 255)
+		if self.CustomTheme and self.CustomTheme.Enabled then
+			local h, s = self:GetThemeBaseColor():ToHSV()
+			return Color3.fromHSV(h, math.clamp(s * 0.75, 0, 1), math.clamp(borderValue / 255, 0, 1))
+		end
+		return Color3.fromRGB(borderValue, borderValue, borderValue)
+	end
+
+	function mainapi:GetThemeRowColor(lighter)
+		local contrast = math.clamp(self:GetThemeValue(self.ThemeRowContrast, 2) / 100, 0, 0.15)
+		return lighter and color.Light(uipallet.Main, contrast) or uipallet.Main
+	end
+
+	function mainapi:ApplyCustomTheme()
+		uipallet.Main = self:GetThemeBaseColor()
+		uipallet.Text = self:GetThemeTextColor()
+
+		local borderColor = self:GetThemeBorderColor()
+		local function safeTween(obj, props)
+			pcall(function()
+				tween:Tween(obj, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
+			end)
+		end
+
+		if self.Categories then
+			for _, categoryapi in self.Categories do
+				if type(categoryapi) == 'table' and categoryapi.Object then
+					safeTween(categoryapi.Object, {BackgroundColor3 = uipallet.Main})
+					local title = categoryapi.Object:FindFirstChild('Title')
+					if title and title:IsA('TextLabel') then
+						safeTween(title, {TextColor3 = uipallet.Text})
+					end
+					local icon = categoryapi.Object:FindFirstChild('Icon')
+					if icon and icon:IsA('ImageLabel') then
+						safeTween(icon, {ImageColor3 = uipallet.Text})
+					end
+					for _, obj in categoryapi.Object:GetDescendants() do
+						if obj:IsA('UIStroke') then
+							safeTween(obj, {Color = borderColor})
+						elseif (obj:IsA('TextLabel') or obj:IsA('TextButton') or obj:IsA('TextBox')) and self:IsNeutralColor(obj.TextColor3) then
+							safeTween(obj, {TextColor3 = color.Dark(uipallet.Text, 0.16)})
+						elseif (obj:IsA('ImageLabel') or obj:IsA('ImageButton')) and self:IsNeutralColor(obj.ImageColor3) then
+							safeTween(obj, {ImageColor3 = color.Light(uipallet.Main, 0.37)})
+						elseif obj:IsA('GuiObject') and obj.BackgroundTransparency < 1 and self:IsNeutralColor(obj.BackgroundColor3) then
+							safeTween(obj, {BackgroundColor3 = obj.Name == 'Divider' and borderColor or color.Light(uipallet.Main, 0.02)})
+						end
+					end
+				end
+			end
+		end
+
+		if self.Modules then
+			for _, moduleapi in self.Modules do
+				if moduleapi.Object then
+					safeTween(moduleapi.Object, {
+						BackgroundColor3 = moduleapi.Enabled and self:GetThemeRowColor(true) or uipallet.Main,
+						TextColor3 = moduleapi.Enabled and uipallet.Text or color.Dark(uipallet.Text, 0.16)
+					})
+				end
+				if moduleapi.Children then
+					safeTween(moduleapi.Children, {BackgroundColor3 = color.Dark(uipallet.Main, 0.02)})
+				end
+				if moduleapi.UpdateFavoriteVisual then
+					moduleapi:UpdateFavoriteVisual()
+				end
+				if moduleapi.UpdatePinVisual then
+					moduleapi:UpdatePinVisual()
+				end
+				if moduleapi.UpdateHiddenBox then
+					moduleapi:UpdateHiddenBox()
+				end
+			end
+		end
+
+		if self.RefreshFavorites then self:RefreshFavorites() end
+		if self.RefreshHiddenModules then self:RefreshHiddenModules() end
+		if self.RefreshPinnedModules then self:RefreshPinnedModules() end
+		if self.UpdateFavoritesButton then self:UpdateFavoritesButton() end
 	end
 
 	function mainapi:Color(h)
@@ -4223,7 +4334,7 @@ function mainapi:CreateCategory(categorysettings)
 		local pinbutton = Instance.new('ImageLabel')
 		pinbutton.Name = 'PinIndicator'
 		pinbutton.Size = UDim2.fromOffset(14, 14)
-		pinbutton.Position = UDim2.new(1, -86, 0, 13)
+		pinbutton.Position = UDim2.new(1, -44, 0, 13)
 		pinbutton.AnchorPoint = Vector2.new(1, 0)
 		pinbutton.BackgroundTransparency = 1
 		pinbutton.Visible = false
@@ -4321,6 +4432,14 @@ function mainapi:CreateCategory(categorysettings)
 			end
 		end
 
+		function moduleapi:UpdatePinPosition()
+			local focused = hovered or modulechildren.Visible
+			local target = focused and UDim2.new(1, -86, 0, 13) or UDim2.new(1, -44, 0, 13)
+			tween:Tween(pinbutton, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Position = target
+			})
+		end
+
 		function moduleapi:ApplyHiddenState()
 			local editing = mainapi.Hidden and mainapi.Hidden.Editing
 			local hidden = mainapi:IsHidden(self.Name)
@@ -4338,6 +4457,7 @@ function mainapi:CreateCategory(categorysettings)
 			pinbutton.Visible = mainapi:IsPinningEnabled() and (not editing) and (self.Pinned or hovered or modulechildren.Visible)
 			self:UpdateHiddenBox()
 			self:UpdatePinVisual()
+			self:UpdatePinPosition()
 		end
 
 		function moduleapi:UpdatePinVisual()
@@ -4345,6 +4465,7 @@ function mainapi:CreateCategory(categorysettings)
 			tween:Tween(pinbutton, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				ImageColor3 = target
 			})
+			self:UpdatePinPosition()
 		end
 
 		function moduleapi:UpdateFavoriteVisual()
@@ -4356,6 +4477,7 @@ function mainapi:CreateCategory(categorysettings)
 
 		local function updatePinVisibility()
 			pinbutton.Visible = mainapi:IsPinningEnabled() and (not (mainapi.Hidden and mainapi.Hidden.Editing)) and (moduleapi.Pinned or hovered or modulechildren.Visible)
+			moduleapi:UpdatePinPosition()
 		end
 
 		local function updateFavoriteVisibility()
@@ -4873,7 +4995,6 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	row.TextSize = 14
 	row.FontFace = uipallet.Font
 	row.Parent = fav.Children
-	addTooltip(row, 'Favorite: '..moduleapi.Name)
 
 	local hiddenbox = Instance.new('TextButton')
 	hiddenbox.Name = 'HiddenBox'
@@ -4904,7 +5025,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	local star = Instance.new('TextButton')
 	star.Name = 'Favorite'
 	star.Size = UDim2.fromOffset(24, 24)
-	star.Position = UDim2.new(1, -62, 0, 8)
+	star.Position = UDim2.new(1, -44, 0, 8)
 	star.AnchorPoint = Vector2.new(1, 0)
 	star.BackgroundTransparency = 1
 	star.AutoButtonColor = false
@@ -4981,6 +5102,9 @@ function mainapi:CreateFavoriteRow(moduleapi)
 			row.BackgroundColor3 = color.Light(uipallet.Main, 0.02)
 		end
 		dots.ImageColor3 = uipallet.Text
+		tween:Tween(star, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(1, -62, 0, 8)
+		})
 		updateBindPreview()
 	end)
 	row.MouseLeave:Connect(function()
@@ -4990,6 +5114,9 @@ function mainapi:CreateFavoriteRow(moduleapi)
 		end
 		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		bind.Visible = false
+		tween:Tween(star, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(1, -44, 0, 8)
+		})
 	end)
 	row.MouseButton1Click:Connect(function()
 		if self.Hidden and self.Hidden.Editing then return end
@@ -7590,6 +7717,10 @@ function mainapi:Load(skipgui, profile, profiledata)
 		self.Pinned.List = savedata.Pinned or self.Pinned.List or {}
 		self:RefreshPinnedModules()
 
+		if self.ApplyCustomTheme then
+			self:ApplyCustomTheme()
+		end
+
 		if savedata.Legit then
 			for i, v in savedata.Legit do
 				local object = self.Legit.Modules[i]
@@ -8228,6 +8359,84 @@ mainapi.EnablePinning = guipane:CreateToggle({
 	end,
 	Tooltip = 'Allows middle-clicking modules to pin them to the top of their category'
 })
+mainapi.CustomTheme = guipane:CreateToggle({
+	Name = 'Custom Theme',
+	Default = false,
+	Function = function()
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Enables custom base UI color sliders'
+})
+mainapi.ThemeHue = guipane:CreateSlider({
+	Name = 'Theme Hue',
+	Min = 0,
+	Max = 360,
+	Default = 0,
+	Suffix = '°',
+	Darker = true,
+	Function = function()
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Changes the base UI tint hue'
+})
+mainapi.ThemeSaturation = guipane:CreateSlider({
+	Name = 'Theme Saturation',
+	Min = 0,
+	Max = 100,
+	Default = 0,
+	Suffix = '%',
+	Darker = true,
+	Function = function()
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Controls how colorful the base UI tint is'
+})
+mainapi.ThemeBrightness = guipane:CreateSlider({
+	Name = 'Theme Brightness',
+	Min = 4,
+	Max = 45,
+	Default = 10,
+	Suffix = '%',
+	Darker = true,
+	Function = function()
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Controls the base background brightness'
+})
+mainapi.ThemeTextBrightness = guipane:CreateSlider({
+	Name = 'Text Brightness',
+	Min = 90,
+	Max = 255,
+	Default = 200,
+	Darker = true,
+	Function = function()
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Controls normal text brightness'
+})
+mainapi.ThemeRowContrast = guipane:CreateSlider({
+	Name = 'Row Contrast',
+	Min = 0,
+	Max = 10,
+	Decimal = 10,
+	Default = 2,
+	Darker = true,
+	Function = function()
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Controls the brightness difference between panels and hovered/enabled rows'
+})
+mainapi.ThemeBorderBrightness = guipane:CreateSlider({
+	Name = 'Border Brightness',
+	Min = 0,
+	Max = 120,
+	Default = 45,
+	Darker = true,
+	Function = function()
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Controls divider and border brightness'
+})
 local scaleslider = {Object = {}, Value = 1}
 mainapi.Scale = guipane:CreateToggle({
 	Name = 'Auto rescale',
@@ -8341,6 +8550,22 @@ guipane:CreateButton({
 		mainapi:QueueSave(0.45)
 	end,
 	Tooltip = 'Sorts GUI'
+})
+guipane:CreateButton({
+	Name = 'Reset custom theme',
+	Function = function()
+		if mainapi.CustomTheme and mainapi.CustomTheme.Enabled then
+			mainapi.CustomTheme:Toggle()
+		end
+		if mainapi.ThemeHue then mainapi.ThemeHue:SetValue(0, nil, true) end
+		if mainapi.ThemeSaturation then mainapi.ThemeSaturation:SetValue(0, nil, true) end
+		if mainapi.ThemeBrightness then mainapi.ThemeBrightness:SetValue(10, nil, true) end
+		if mainapi.ThemeTextBrightness then mainapi.ThemeTextBrightness:SetValue(200, nil, true) end
+		if mainapi.ThemeRowContrast then mainapi.ThemeRowContrast:SetValue(2, nil, true) end
+		if mainapi.ThemeBorderBrightness then mainapi.ThemeBorderBrightness:SetValue(45, nil, true) end
+		mainapi:ApplyCustomTheme()
+	end,
+	Tooltip = 'Resets the custom theme sliders back to classic colors'
 })
 
 --[[
