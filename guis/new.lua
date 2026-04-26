@@ -2999,16 +2999,14 @@ function mainapi:CreateGUI()
 		addCorner(button, UDim.new(1, 0))
 		addTooltip(button, 'Open overlays menu')
 
-		local favoritesButton = Instance.new('TextButton')
+		local favoritesButton = Instance.new('ImageButton')
 		favoritesButton.Name = 'FavoritesButton'
-		favoritesButton.Size = UDim2.fromOffset(24, 24)
-		favoritesButton.Position = UDim2.new(1, -56, 0, 5)
+		favoritesButton.Size = UDim2.fromOffset(16, 16)
+		favoritesButton.Position = UDim2.new(1, -50, 0, 13)
 		favoritesButton.BackgroundTransparency = 1
 		favoritesButton.AutoButtonColor = false
-		favoritesButton.Text = '★'
-		favoritesButton.TextSize = 21
-		favoritesButton.FontFace = uipallet.FontSemiBold
-		favoritesButton.TextColor3 = Color3.fromRGB(118, 118, 126)
+		favoritesButton.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
+		favoritesButton.ImageColor3 = Color3.fromRGB(118, 118, 126)
 		favoritesButton.Parent = bar
 		addTooltip(favoritesButton, 'Open favorites')
 
@@ -3902,17 +3900,9 @@ function mainapi:CreateCategory(categorysettings)
 	icon.ImageColor3 = uipallet.Text
 	icon.Parent = window
 	if categorysettings.StarIcon then
-		icon.ImageTransparency = 1
-		local staricon = Instance.new('TextLabel')
-		staricon.Name = 'StarIcon'
-		staricon.Size = UDim2.fromScale(1, 1)
-		staricon.Position = UDim2.fromOffset(0, -3)
-		staricon.BackgroundTransparency = 1
-		staricon.Text = '★'
-		staricon.TextColor3 = uipallet.Text
-		staricon.TextSize = 19
-		staricon.FontFace = uipallet.FontSemiBold
-		staricon.Parent = icon
+		icon.ImageTransparency = 0
+		icon.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
+		icon.ImageColor3 = uipallet.Text
 	end
 	local title = Instance.new('TextLabel')
 	title.Name = 'Title'
@@ -4205,18 +4195,16 @@ function mainapi:CreateCategory(categorysettings)
 		dots.Image = getcustomasset('newvape/assets/new/dots.png')
 		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		dots.Parent = dotsbutton
-		local favoritebutton = Instance.new('TextButton')
+		local favoritebutton = Instance.new('ImageButton')
 		favoritebutton.Name = 'Favorite'
-		favoritebutton.Size = UDim2.fromOffset(24, 24)
-		favoritebutton.Position = UDim2.new(1, -62, 0, 8)
+		favoritebutton.Size = UDim2.fromOffset(18, 18)
+		favoritebutton.Position = UDim2.new(1, -60, 0, 11)
 		favoritebutton.AnchorPoint = Vector2.new(1, 0)
 		favoritebutton.BackgroundTransparency = 1
 		favoritebutton.AutoButtonColor = false
 		favoritebutton.Visible = false
-		favoritebutton.Text = '★'
-		favoritebutton.TextSize = 20
-		favoritebutton.FontFace = uipallet.FontSemiBold
-		favoritebutton.TextColor3 = color.Dark(uipallet.Text, 0.43)
+		favoritebutton.Image = getcustomasset('newvape/assets/new/favoriteoff.png')
+		favoritebutton.ImageColor3 = Color3.fromRGB(118, 118, 126)
 		favoritebutton.Parent = modulebutton
 		addTooltip(favoritebutton, 'Add to favorites')
 
@@ -4770,9 +4758,34 @@ function mainapi:IsFavorite(name)
 	return self.Favorites and self.Favorites.List and table.find(self.Favorites.List, name) ~= nil
 end
 
+function mainapi:GetFavoriteStarAsset(active)
+	if active then
+		return getcustomasset('newvape/assets/new/favoriteon.png')
+	end
+	return getcustomasset('newvape/assets/new/favoriteoff.png')
+end
+
 function mainapi:AnimateStarColor(star, active, hover)
 	if not star then return end
-	local target = active and Color3.fromRGB(255, 170, 42) or (hover and Color3.fromRGB(205, 205, 215) or Color3.fromRGB(118, 118, 126))
+
+	if star:IsA('ImageButton') or star:IsA('ImageLabel') then
+		star.Image = self:GetFavoriteStarAsset(active)
+
+		local targetColor
+		if active then
+			targetColor = Color3.new(1, 1, 1)
+		else
+			targetColor = hover and Color3.fromRGB(185, 185, 195) or Color3.fromRGB(118, 118, 126)
+		end
+
+		tween:Tween(star, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			ImageColor3 = targetColor,
+			ImageTransparency = 0
+		})
+		return
+	end
+
+	local target = active and Color3.fromRGB(255, 170, 42) or (hover and Color3.fromRGB(185, 185, 195) or Color3.fromRGB(118, 118, 126))
 	tween:Tween(star, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		TextColor3 = target
 	})
@@ -4780,6 +4793,10 @@ end
 
 function mainapi:PulseStar(star)
 	if not star then return end
+	if star:IsA('ImageButton') or star:IsA('ImageLabel') then
+		self:PulseImage(star)
+		return
+	end
 	local originalSize = star:GetAttribute('OriginalTextSize') or star.TextSize
 	star:SetAttribute('OriginalTextSize', originalSize)
 	tween:Tween(star, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -4911,17 +4928,15 @@ function mainapi:CreateFavoriteRow(moduleapi)
 	hiddenboxfill.Parent = hiddenbox
 	addTooltip(hiddenbox, 'Show / hide module')
 
-	local star = Instance.new('TextButton')
+	local star = Instance.new('ImageButton')
 	star.Name = 'Favorite'
-	star.Size = UDim2.fromOffset(24, 24)
-	star.Position = UDim2.new(1, -34, 0, 8)
+	star.Size = UDim2.fromOffset(18, 18)
+	star.Position = UDim2.new(1, -28, 0, 11)
 	star.AnchorPoint = Vector2.new(1, 0)
 	star.BackgroundTransparency = 1
 	star.AutoButtonColor = false
-	star.Text = '★'
-	star.TextSize = 20
-	star.FontFace = uipallet.FontSemiBold
-	star.TextColor3 = Color3.fromRGB(255, 170, 42)
+	star.Image = getcustomasset('newvape/assets/new/favoriteon.png')
+	star.ImageColor3 = Color3.new(1, 1, 1)
 	star.Parent = row
 	addTooltip(star, 'Remove from favorites')
 
@@ -4992,7 +5007,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 		end
 		dots.ImageColor3 = uipallet.Text
 		tween:Tween(star, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Position = UDim2.new(1, -62, 0, 8)
+			Position = UDim2.new(1, -58, 0, 11)
 		})
 		updateBindPreview()
 	end)
@@ -5004,7 +5019,7 @@ function mainapi:CreateFavoriteRow(moduleapi)
 		dots.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		bind.Visible = false
 		tween:Tween(star, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Position = UDim2.new(1, -34, 0, 8)
+			Position = UDim2.new(1, -28, 0, 11)
 		})
 	end)
 	row.MouseButton1Click:Connect(function()
