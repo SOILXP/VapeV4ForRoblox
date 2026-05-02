@@ -1,7 +1,8 @@
 local vape = shared.vape
+local realLoadstring = loadstring
 
 local loadstring = function(...)
-	local res, err = loadstring(...)
+	local res, err = realLoadstring(...)
 	if err and vape then
 		vape:CreateNotification('Vape', 'Failed to load : '..err, 30, 'alert')
 	end
@@ -62,7 +63,7 @@ else
 		if suc and res ~= '404: Not Found' then
 			loadstring(downloadFile(targetPath), 'bedwars')()
 		else
-			warn('Failed to fetch BedWars module:', res)
+			warn('failed to fetch BedWars module:', res)
 		end
 	end
 end
