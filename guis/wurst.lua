@@ -60,6 +60,7 @@ local logoImage
 local logoFallback
 local versionLabel
 local activeList
+local creationList
 local radarWindow
 local radarCanvas
 local tooltip
@@ -403,6 +404,33 @@ local function moduleKey(categoryName, name)
 	return canonicalCategoryName(categoryName)..':'..tostring(name or ''):gsub('%s+', ''):lower()
 end
 
+local function safeText(value)
+	if type(value) == 'function' then
+		local ok, res = pcall(value, 0)
+		return ok and tostring(res) or ''
+	end
+	return tostring(value or '')
+end
+
+local function safeSuffix(suffix, value)
+	if type(suffix) == 'function' then
+		local ok, res = pcall(suffix, value)
+		return ok and tostring(res or '') or ''
+	end
+	return tostring(suffix or '')
+end
+
+local function logCreatedModule(categoryName, moduleName)
+	if creationList then
+		local count = 0
+		for _, moduleapi in ipairs(mainapi.ModuleList) do
+			count += 1
+		end
+		creationList.Text = 'Created: '..count..' modules\nLast: '..tostring(categoryName)..' / '..tostring(moduleName)
+	end
+end
+
+
 local function bringToFront(windowapi)
 	focusedZ += 1
 	windowapi.Frame.ZIndex = focusedZ
@@ -714,6 +742,7 @@ local function createOptionBase(kind, optionsettings, parent, moduleapi)
 		Value = optionsettings.Default,
 		Function = optionsettings.Function or function() end,
 		Object = nil,
+		Tooltip = optionsettings.Tooltip or optionsettings.HoverText or optionsettings.Description,
 		Visible = optionsettings.Visible ~= false
 	}
 	local row = Instance.new('TextButton')
@@ -732,7 +761,7 @@ local function createOptionBase(kind, optionsettings, parent, moduleapi)
 	label.Position = UDim2.fromOffset(3, 0)
 	optionapi.Object = row
 	optionapi.Label = label
-	if optionsettings.Tooltip then connectTooltip(row, optionsettings.Tooltip) end
+	if optionapi.Tooltip then connectTooltip(row, optionapi.Tooltip) end
 
 	function optionapi:SetValue(val, _, final)
 		self.Value = val
@@ -813,7 +842,7 @@ components.Slider = function(optionsettings, parent, moduleapi)
 	api.Default = optionsettings.Default or api.Min
 	api.Value = api.Default
 	api.Suffix = optionsettings.Suffix or ''
-	local value = makeText(api.Object, tostring(api.Value)..api.Suffix, 10, false)
+	local value = makeText(api.Object, tostring(api.Value)..safeSuffix(api.Suffix, api.Value), 10, false)
 	value.Size = UDim2.new(0, 38, 1, 0)
 	value.Position = UDim2.new(1, -40, 0, 0)
 	value.TextXAlignment = Enum.TextXAlignment.Right
@@ -831,12 +860,16 @@ components.Slider = function(optionsettings, parent, moduleapi)
 	local function update()
 		local pct = math.clamp((api.Value - api.Min) / math.max(api.Max - api.Min, 1), 0, 1)
 		fill.Size = UDim2.new(pct, 0, 1, 0)
-		value.Text = tostring(math.floor(api.Value * 100) / 100)..api.Suffix
+		value.Text = tostring(math.floor(api.Value * 100) / 100)..safeSuffix(api.Suffix, api.Value)
 	end
 
 	function api:SetValue(val, _, final)
 		val = math.clamp(tonumber(val) or api.Min, api.Min, api.Max)
-		if api.Decimal ~= 1 then val = math.floor(val / api.Decimal + 0.5) * api.Decimal end
+		if api.Decimal and api.Decimal > 1 then
+			val = math.floor(val * api.Decimal + 0.5) / api.Decimal
+		elseif api.Decimal and api.Decimal > 0 and api.Decimal < 1 then
+			val = math.floor(val / api.Decimal + 0.5) * api.Decimal
+		end
 		self.Value = val
 		update()
 		safeCall(self.Function, val, final)
@@ -933,14 +966,14 @@ components.Dropdown = function(optionsettings, parent, moduleapi)
 	api.List = optionsettings.List or {}
 	api.Default = optionsettings.Default or api.List[1] or ''
 	api.Value = api.Default
-	local value = makeText(api.Object, tostring(api.Value), 10, false)
+	local value = makeText(api.Object, safeText(api.Value), 10, false)
 	value.Size = UDim2.new(0, 54, 1, 0)
 	value.Position = UDim2.new(1, -58, 0, 0)
 	value.TextXAlignment = Enum.TextXAlignment.Right
 
 	function api:SetValue(val, _, final)
 		self.Value = val
-		value.Text = tostring(val)
+		value.Text = safeText(val)
 		safeCall(self.Function, val, final)
 	end
 
@@ -985,6 +1018,9 @@ components.Textbox = function(optionsettings, parent, moduleapi)
 	return api
 end
 components.TextBox = components.Textbox
+components.TextboxComponent = components.Textbox
+components.TextFieldComponent = components.Textbox
+components.Input = components.Textbox
 components.TextField = components.Textbox
 components.TextFieldEditButton = components.Textbox
 components.File = components.Textbox
@@ -1006,25 +1042,38 @@ components.FeatureButton = components.Button
 
 components.ColorSlider = function(optionsettings, parent, moduleapi)
 	local api = createOptionBase('ColorSlider', optionsettings, parent, moduleapi)
-	api.Default = optionsettings.Default or Color3.fromHSV(0, 1, 1)
+	local defaultHue = optionsettings.DefaultHue or 0
+	local defaultSat = optionsettings.DefaultSaturation or optionsettings.DefaultSat or 1
+	local defaultVal = optionsettings.DefaultValue or optionsettings.DefaultBrightness or 1
+	api.Default = optionsettings.Default or Color3.fromHSV(defaultHue, defaultSat, defaultVal)
 	api.Value = api.Default
+	api.Hue, api.Sat, api.Brightness = (typeof(api.Value) == 'Color3' and api.Value:ToHSV() or defaultHue), defaultSat, defaultVal
+
 	local swatch = Instance.new('Frame')
 	swatch.Size = UDim2.fromOffset(8, 8)
 	swatch.Position = UDim2.new(1, -11, 0.5, -4)
-	swatch.BackgroundColor3 = typeof(api.Value) == 'Color3' and api.Value or Color3.fromHSV(0, 1, 1)
+	swatch.BackgroundColor3 = typeof(api.Value) == 'Color3' and api.Value or Color3.fromHSV(defaultHue, defaultSat, defaultVal)
 	swatch.BorderSizePixel = 0
 	swatch.Parent = api.Object
 	stroke(swatch, 1, 0.15)
 
 	function api:SetValue(val, _, final)
-		self.Value = val
-		swatch.BackgroundColor3 = typeof(val) == 'Color3' and val or Color3.fromHSV(type(val) == 'number' and val or 0, 1, 1)
-		safeCall(self.Function, val, final)
+		if typeof(val) == 'Color3' then
+			self.Value = val
+			self.Hue, self.Sat, self.Brightness = val:ToHSV()
+		elseif type(val) == 'number' then
+			self.Hue = val
+			self.Value = Color3.fromHSV(self.Hue, self.Sat or 1, self.Brightness or 1)
+		else
+			self.Value = self.Default
+			self.Hue, self.Sat, self.Brightness = self.Value:ToHSV()
+		end
+		swatch.BackgroundColor3 = self.Value
+		safeCall(self.Function, self.Hue, self.Sat, self.Brightness, final)
 	end
 
 	api.Object.MouseButton1Click:Connect(function()
-		local h = tick() % 1
-		api:SetValue(Color3.fromHSV(h, 1, 1), nil, true)
+		api:SetValue(Color3.fromHSV(tick() % 1, api.Sat or 1, api.Brightness or 1), nil, true)
 	end)
 	api.Object.MouseButton2Click:Connect(function() api:Reset() end)
 	return api
@@ -1172,7 +1221,7 @@ function mainapi:CreateCategory(categorysettings)
 			Name = name,
 			Category = canonical,
 			Function = modulesettings.Function or function() end,
-			Tooltip = modulesettings.Tooltip,
+			Tooltip = modulesettings.Tooltip or modulesettings.HoverText or modulesettings.Description,
 			SettingsList = nil
 		}
 
@@ -1212,7 +1261,7 @@ function mainapi:CreateCategory(categorysettings)
 		moduleapi.Children = settingsWindow.Body
 		settingsWindow.Closed = true
 
-		local desc = makeText(settingsWindow.Body, 'Type: Module\nCategory: '..canonical..'\n'..(modulesettings.Tooltip or 'No description'), 10, false)
+		local desc = makeText(settingsWindow.Body, 'Type: Module\nCategory: '..canonical..'\n'..(moduleapi.Tooltip or 'No description'), 10, false)
 		desc.Size = UDim2.new(1, -6, 0, math.max(28, getfontsize(desc.Text, 10, uipallet.Font).Y + 4))
 		desc.Position = UDim2.fromOffset(3, 0)
 		desc.TextYAlignment = Enum.TextYAlignment.Top
@@ -1268,7 +1317,7 @@ function mainapi:CreateCategory(categorysettings)
 			text.TextColor3 = self.Enabled and uipallet.DarkText or uipallet.Text
 			settingsStrip.TextColor3 = self.Enabled and uipallet.DarkText or uipallet.Enabled
 			if not self.Enabled then
-				for _, v in ipairs(self.Connections) do safeCall(v.Disconnect, v) end
+				for _, v in ipairs(self.Connections) do if type(v) == 'table' and v.Disconnect then safeCall(v.Disconnect, v) elseif typeof(v) == 'RBXScriptConnection' then safeCall(function() v:Disconnect() end) elseif type(v) == 'function' then safeCall(v) end end
 				table.clear(self.Connections)
 			end
 			if not multiple then mainapi:UpdateTextGUI() end
@@ -1282,6 +1331,22 @@ function mainapi:CreateCategory(categorysettings)
 				warn('[Wurst UI] option failed for '..name..' / '..compName..': '..tostring(res))
 				return createOptionBase(compName, optionsettings or {}, moduleapi.SettingsList, moduleapi)
 			end
+		end
+
+		moduleapi.CreateTextBox = moduleapi.CreateTextbox or function(_, optionsettings)
+			return components.Textbox(optionsettings or {}, moduleapi.SettingsList, moduleapi)
+		end
+		moduleapi.CreateColorSlider = moduleapi.CreateColorSlider or function(_, optionsettings)
+			return components.ColorSlider(optionsettings or {}, moduleapi.SettingsList, moduleapi)
+		end
+		moduleapi.CreateDropdown = moduleapi.CreateDropdown or function(_, optionsettings)
+			return components.Dropdown(optionsettings or {}, moduleapi.SettingsList, moduleapi)
+		end
+		moduleapi.CreateSlider = moduleapi.CreateSlider or function(_, optionsettings)
+			return components.Slider(optionsettings or {}, moduleapi.SettingsList, moduleapi)
+		end
+		moduleapi.CreateToggle = moduleapi.CreateToggle or function(_, optionsettings)
+			return components.Toggle(optionsettings or {}, moduleapi.SettingsList, moduleapi)
 		end
 
 		setmetatable(moduleapi, {
@@ -1311,13 +1376,14 @@ function mainapi:CreateCategory(categorysettings)
 		settingsStrip.MouseButton1Click:Connect(function()
 			moduleapi:Expand()
 		end)
-		if modulesettings.Tooltip then connectTooltip(row, modulesettings.Tooltip) end
+		if moduleapi.Tooltip then connectTooltip(row, moduleapi.Tooltip) end
 
 		self.Modules[name] = moduleapi
 		mainapi.Modules[key] = moduleapi
 		if not mainapi.Modules[name] then mainapi.Modules[name] = moduleapi end
 		mainapi.ModuleKeys[key] = key
 		table.insert(mainapi.ModuleList, moduleapi)
+		logCreatedModule(canonical, name)
 
 		local rows = {}
 		for _, module in pairs(self.Modules) do table.insert(rows, module) end
@@ -1421,11 +1487,18 @@ versionLabel = makeShadowedText(logoFrame, 'v7.53.1 MC26.1.2', 11, UDim2.fromOff
 versionLabel.Size = UDim2.fromOffset(180, 18)
 
 activeList = makeText(logoFrame, '', 13, false)
-activeList.Size = UDim2.fromOffset(160, 90)
+activeList.Size = UDim2.fromOffset(160, 70)
 activeList.Position = UDim2.fromOffset(0, 34)
 activeList.TextYAlignment = Enum.TextYAlignment.Top
 activeList.TextXAlignment = Enum.TextXAlignment.Left
 activeList.TextColor3 = Color3.new(1, 1, 1)
+
+creationList = makeText(logoFrame, 'Created: 0 modules', 10, false)
+creationList.Size = UDim2.fromOffset(230, 35)
+creationList.Position = UDim2.fromOffset(0, 104)
+creationList.TextYAlignment = Enum.TextYAlignment.Top
+creationList.TextXAlignment = Enum.TextXAlignment.Left
+creationList.TextColor3 = Color3.fromRGB(235, 235, 235)
 
 tooltip = Instance.new('Frame')
 tooltip.Name = 'Tooltip'
