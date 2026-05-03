@@ -136,9 +136,9 @@ local color = {}
 local tween = {tweens = {}}
 local uipallet = {
 	Main = Color3.fromRGB(64, 71, 86),
-	MainAlpha = 0.50,
+	MainAlpha = 1,
 	Header = Color3.fromRGB(92, 126, 181),
-	HeaderAlpha = 0.28,
+	HeaderAlpha = 0,
 	Text = Color3.fromRGB(240, 240, 240),
 	DarkText = Color3.fromRGB(12, 12, 12),
 	Enabled = Color3.fromRGB(73, 224, 97),
@@ -693,7 +693,7 @@ local function createWindow(name, title, width, height, closable)
 	frame.Size = UDim2.fromOffset(width, height)
 	frame.Position = UDim2.fromOffset(windowapi.X, windowapi.Y)
 	frame.BackgroundColor3 = uipallet.Main
-	frame.BackgroundTransparency = 1 - math.clamp(mainapi.Settings.Opacity or 0.82, 0, 1)
+	frame.BackgroundTransparency = 1
 	frame.BorderSizePixel = 0
 	frame.Visible = false
 	frame.Parent = scaledgui
@@ -701,7 +701,7 @@ local function createWindow(name, title, width, height, closable)
 
 	local header = Instance.new('TextButton')
 	header.Name = 'TitleBar'
-	header.Size = UDim2.new(1, 0, 0, 13)
+	header.Size = UDim2.new(1, 0, 0, 17)
 	header.BackgroundColor3 = uipallet.Header
 	header.BackgroundTransparency = uipallet.HeaderAlpha
 	header.BorderSizePixel = 0
@@ -710,14 +710,14 @@ local function createWindow(name, title, width, height, closable)
 	header.Parent = frame
 	stroke(header, 1, 0.45)
 
-	local titleText = makeText(header, title, 10, true)
+	local titleText = makeText(header, title, 12, true)
 	titleText.Size = UDim2.new(1, closable and -37 or -25, 1, 0)
-	titleText.Position = UDim2.fromOffset(3, 0)
+	titleText.Position = UDim2.fromOffset(4, 0)
 
 	local pin = Instance.new('TextButton')
 	pin.Name = 'Pin'
-	pin.Size = UDim2.fromOffset(8, 8)
-	pin.Position = UDim2.new(1, closable and -28 or -18, 0, 2)
+	pin.Size = UDim2.fromOffset(10, 10)
+	pin.Position = UDim2.new(1, closable and -33 or -22, 0, 3)
 	pin.Text = ''
 	pin.AutoButtonColor = false
 	pin.BackgroundColor3 = windowapi.Pinned and uipallet.Enabled or Color3.fromRGB(150, 35, 35)
@@ -728,8 +728,8 @@ local function createWindow(name, title, width, height, closable)
 
 	local minimize = Instance.new('TextButton')
 	minimize.Name = 'Minimize'
-	minimize.Size = UDim2.fromOffset(8, 8)
-	minimize.Position = UDim2.new(1, closable and -18 or -9, 0, 2)
+	minimize.Size = UDim2.fromOffset(10, 10)
+	minimize.Position = UDim2.new(1, closable and -21 or -11, 0, 3)
 	minimize.Text = ''
 	minimize.AutoButtonColor = false
 	minimize.BackgroundColor3 = Color3.fromRGB(34, 150, 45)
@@ -742,8 +742,8 @@ local function createWindow(name, title, width, height, closable)
 	if closable then
 		close = Instance.new('TextButton')
 		close.Name = 'Close'
-		close.Size = UDim2.fromOffset(8, 8)
-		close.Position = UDim2.new(1, -9, 0, 2)
+		close.Size = UDim2.fromOffset(10, 10)
+		close.Position = UDim2.new(1, -11, 0, 3)
 		close.Text = '×'
 		close.TextSize = 9
 		close.TextColor3 = Color3.new()
@@ -758,8 +758,8 @@ local function createWindow(name, title, width, height, closable)
 
 	local body = Instance.new('ScrollingFrame')
 	body.Name = 'Body'
-	body.Position = UDim2.fromOffset(0, 13)
-	body.Size = UDim2.new(1, 0, 1, -13)
+	body.Position = UDim2.fromOffset(0, 17)
+	body.Size = UDim2.new(1, 0, 1, -17)
 	body.BackgroundTransparency = 1
 	body.BorderSizePixel = 0
 	body.ScrollBarThickness = 2
@@ -786,10 +786,10 @@ local function createWindow(name, title, width, height, closable)
 	local function applySize()
 		local bodyHeight = layout.AbsoluteContentSize.Y
 		local maxHeight = name:find('Settings') and (mainapi.Settings.MaxSettingsHeight or 320) or (mainapi.Settings.MaxWindowHeight or 240)
-		local h = windowapi.Minimized and 13 or math.clamp(13 + bodyHeight + 2, 13, maxHeight)
+		local h = windowapi.Minimized and 17 or math.clamp(17 + bodyHeight + 2, 17, maxHeight)
 		frame.Size = UDim2.fromOffset(width, h)
 		body.Visible = not windowapi.Minimized
-		body.Size = UDim2.new(1, 0, 1, -13)
+		body.Size = UDim2.new(1, 0, 1, -17)
 		body.CanvasSize = UDim2.fromOffset(0, bodyHeight + 2)
 	end
 
@@ -910,7 +910,7 @@ local function createOptionBase(kind, optionsettings, parent, moduleapi)
 	row.Name = optionapi.Name
 	row.Size = UDim2.new(1, -6, 0, 14)
 	row.BackgroundColor3 = Color3.fromRGB(72, 78, 93)
-	row.BackgroundTransparency = 0.38
+	row.BackgroundTransparency = 1
 	row.BorderSizePixel = 0
 	row.AutoButtonColor = false
 	row.Text = ''
@@ -1590,7 +1590,7 @@ function mainapi:CreateCategory(categorysettings)
 	end
 
 	local categoryapi = {Type = 'Category', Name = canonical, OriginalName = original, Modules = {}}
-	local window = createWindow(canonical..'Window', canonical, 92, 30, false)
+	local window = createWindow(canonical..'Window', canonical, 150, 36, false)
 	window.Frame.Name = canonical..'Window'
 	categoryapi.WindowAPI = window
 	categoryapi.Window = window.Frame
@@ -1638,28 +1638,28 @@ function mainapi:CreateCategory(categorysettings)
 
 		local row = Instance.new('TextButton')
 		row.Name = name
-		row.Size = UDim2.new(1, 0, 0, 11)
+		row.Size = UDim2.new(1, 0, 0, 15)
 		row.BackgroundColor3 = uipallet.Main
-		row.BackgroundTransparency = uipallet.MainAlpha
+		row.BackgroundTransparency = 1
 		row.BorderSizePixel = 0
 		row.AutoButtonColor = false
 		row.Text = ''
 		row.Parent = window.Body
 		stroke(row, 1, 0.48)
 
-		local text = makeText(row, name, 9, false)
-		text.Size = UDim2.new(1, -15, 1, 0)
-		text.Position = UDim2.fromOffset(2, 0)
+		local text = makeText(row, name, 12, false)
+		text.Size = UDim2.new(1, -20, 1, 0)
+		text.Position = UDim2.fromOffset(4, 0)
 		text.TextXAlignment = Enum.TextXAlignment.Center
 
 		local settingsStrip = Instance.new('TextButton')
-		settingsStrip.Size = UDim2.fromOffset(11, 11)
-		settingsStrip.Position = UDim2.new(1, -11, 0, 0)
+		settingsStrip.Size = UDim2.fromOffset(15, 15)
+		settingsStrip.Position = UDim2.new(1, -15, 0, 0)
 		settingsStrip.BackgroundColor3 = uipallet.Main
-		settingsStrip.BackgroundTransparency = uipallet.MainAlpha
+		settingsStrip.BackgroundTransparency = 1
 		settingsStrip.BorderSizePixel = 0
 		settingsStrip.Text = '▾'
-		settingsStrip.TextSize = 9
+		settingsStrip.TextSize = 11
 		settingsStrip.TextColor3 = uipallet.Enabled
 		settingsStrip.FontFace = uipallet.FontSemiBold
 		settingsStrip.Parent = row
