@@ -8167,7 +8167,7 @@ scaleslider = guipane:CreateSlider({
 })
 guipane:CreateDropdown({
 	Name = 'GUI Theme',
-	List = inputService.TouchEnabled and {'new', 'old'} or {'new', 'old', 'rise'},
+	List = inputService.TouchEnabled and {'new', 'old', 'wurst'} or {'new', 'old', 'rise', 'wurst'},
 	Function = function(val, mouse)
 		if mouse then
 			writefile('newvape/profiles/gui.txt', val)
@@ -8179,7 +8179,7 @@ guipane:CreateDropdown({
 			end
 		end
 	end,
-	Tooltip = 'new - The newest vape theme to since v4.05\nold - The vape theme pre v4.05\nrise - Rise 6.0'
+	Tooltip = 'new - The newest vape theme since v4.05\nold - The vape theme pre v4.05\nrise - Rise 6.0\nwurst - Wurst-style full-screen grid'
 })
 mainapi.RainbowMode = guipane:CreateDropdown({
 	Name = 'Rainbow Mode',
