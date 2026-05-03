@@ -145,8 +145,8 @@ local uipallet = {
 	Border = Color3.fromRGB(28, 31, 37),
 	Accent = Color3.fromRGB(0, 180, 0),
 	Slider = Color3.fromRGB(210, 150, 0),
-	Font = Font.fromEnum(Enum.Font.Code),
-	FontSemiBold = Font.fromEnum(Enum.Font.Code, Enum.FontWeight.Bold),
+	Font = Font.fromEnum(Enum.Font.Arcade),
+	FontSemiBold = Font.fromEnum(Enum.Font.Arcade, Enum.FontWeight.Bold),
 	Tween = TweenInfo.new(0.08, Enum.EasingStyle.Linear)
 }
 
@@ -492,6 +492,13 @@ local function makeShadowedText(parent, txt, size, pos, textCol)
 	return label
 end
 
+local function applyMinecraftFont(obj)
+	if obj:IsA('TextLabel') or obj:IsA('TextButton') or obj:IsA('TextBox') then
+		obj.FontFace = obj.Text:len() > 0 and uipallet.Font or uipallet.Font
+	end
+end
+
+
 local function canonicalCategoryName(name)
 	name = tostring(name or 'Other')
 	if CATEGORY_ALIASES[name] then return CATEGORY_ALIASES[name] end
@@ -740,6 +747,7 @@ local function createWindow(name, title, width, height, closable)
 		close.Text = '×'
 		close.TextSize = 9
 		close.TextColor3 = Color3.new()
+		close.FontFace = uipallet.FontSemiBold
 		close.AutoButtonColor = false
 		close.BackgroundColor3 = Color3.fromRGB(170, 45, 45)
 		close.BorderSizePixel = 0
@@ -1827,6 +1835,10 @@ else
 end
 mainapi.gui = gui
 
+mainapi:Clean(gui.DescendantAdded:Connect(function(obj)
+	applyMinecraftFont(obj)
+end))
+
 scaledgui = Instance.new('Frame')
 scaledgui.Name = 'ScaledGui'
 scaledgui.Size = UDim2.fromScale(1, 1)
@@ -2106,6 +2118,10 @@ task.defer(function()
 	updateWindowVisibility()
 	mainapi:UpdateTextGUI()
 end)
+
+for _, obj in ipairs(gui:GetDescendants()) do
+	applyMinecraftFont(obj)
+end
 
 mainapi['GUI bind indicator'] = mainapi['GUI bind indicator'] or {Enabled = false, Object = activeList}
 mainapi['GUI bind indicator text'] = mainapi['GUI bind indicator text'] or {Enabled = false, Object = activeList}
