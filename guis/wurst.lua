@@ -1,4 +1,4 @@
-
+\
 local mainapi = {
 	Connections = {},
 	Categories = {},
@@ -1178,9 +1178,11 @@ function mainapi:CreateCategory(categorysettings)
 	categorysettings = categorysettings or {}
 	local original = categorysettings.Name or 'Other'
 	local canonical = canonicalCategoryName(original)
-	if self.Categories[canonical] then
-		self.Categories[original] = self.Categories[canonical]
-		return self.Categories[canonical]
+
+	local existing = rawget(self.Categories, canonical)
+	if existing then
+		rawset(self.Categories, original, existing)
+		return existing
 	end
 
 	local categoryapi = {Type = 'Category', Name = canonical, OriginalName = original, Modules = {}}
@@ -1397,10 +1399,10 @@ function mainapi:CreateCategory(categorysettings)
 		return moduleapi
 	end
 
-	self.Categories[canonical] = categoryapi
-	self.Categories[original] = categoryapi
+	rawset(self.Categories, canonical, categoryapi)
+	rawset(self.Categories, original, categoryapi)
 	for alias, target in pairs(CATEGORY_ALIASES) do
-		if target == canonical then self.Categories[alias] = categoryapi end
+		if target == canonical then rawset(self.Categories, alias, categoryapi) end
 	end
 	table.insert(self.CategoryOrder, categoryapi)
 	return categoryapi
@@ -1519,10 +1521,16 @@ setmetatable(mainapi.Categories, {
 	__index = function(tab, categoryName)
 		local canonical = canonicalCategoryName(categoryName)
 		local category = rawget(tab, canonical)
+
 		if not category then
 			category = mainapi:CreateCategory({Name = canonical})
+			category = rawget(tab, canonical)
 		end
-		rawset(tab, categoryName, category)
+
+		if category then
+			rawset(tab, categoryName, category)
+		end
+
 		return category
 	end
 })
