@@ -1884,11 +1884,12 @@ logoImage.Parent = logoFrame
 
 local versionBack = Instance.new('Frame')
 versionBack.Name = 'VersionBack'
-versionBack.Size = UDim2.fromOffset(190, 18)
-versionBack.Position = UDim2.fromOffset(122, 6)
+versionBack.Size = UDim2.fromOffset(430, 18)
+versionBack.Position = UDim2.fromOffset(-55, 6)
 versionBack.BackgroundColor3 = Color3.fromRGB(205, 215, 230)
 versionBack.BackgroundTransparency = 0.32
 versionBack.BorderSizePixel = 0
+versionBack.ZIndex = 0
 versionBack.Parent = logoFrame
 
 versionLabel = makeShadowedText(logoFrame, 'v7.53.1 MC26.1.2', 11, UDim2.fromOffset(126, 6), uipallet.Text)
