@@ -787,6 +787,37 @@ function mainapi:CreateNotification(_, text)
 	warn('[Wurst UI Notification]', text or '')
 end
 
+function mainapi:Clean(obj)
+	if typeof(obj) == 'Instance' then
+		table.insert(self.Connections, {
+			Disconnect = function()
+				if obj then
+					pcall(function()
+						obj:ClearAllChildren()
+						obj:Destroy()
+					end)
+				end
+			end
+		})
+		return
+	end
+
+	if typeof(obj) == 'RBXScriptConnection' then
+		table.insert(self.Connections, obj)
+		return
+	end
+
+	if type(obj) == 'function' then
+		table.insert(self.Connections, {Disconnect = obj})
+		return
+	end
+
+	if type(obj) == 'table' and type(obj.Disconnect) == 'function' then
+		table.insert(self.Connections, obj)
+		return
+	end
+end
+
 gui = Instance.new('ScreenGui')
 gui.Name = randomString()
 gui.DisplayOrder = 9999999
