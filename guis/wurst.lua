@@ -1,4 +1,4 @@
--- Wurst duplicate-load guard
+
 do
 	local sharedTable = shared or (getgenv and getgenv()) or nil
 	local old = sharedTable and rawget(sharedTable, 'vape') or nil
@@ -19,6 +19,36 @@ do
 			sharedTable.vape = nil
 		end)
 	end
+
+	local function cleanParent(parent)
+		if not parent then return end
+		for _, child in ipairs(parent:GetChildren()) do
+			local kill = false
+			if child:IsA('ScreenGui') then
+				kill = child.Name == 'WurstClickGui' or child:GetAttribute('WurstTheme') == true
+				if not kill then
+					kill = child:FindFirstChild('ScaledGui', true) and child:FindFirstChild('WurstLogo', true)
+				end
+			end
+			if kill then
+				pcall(function()
+					child:ClearAllChildren()
+					child:Destroy()
+				end)
+			end
+		end
+	end
+
+	pcall(function()
+		if gethui then cleanParent(gethui()) end
+	end)
+	pcall(function()
+		cleanParent(game:GetService('CoreGui'))
+	end)
+	pcall(function()
+		local plr = game:GetService('Players').LocalPlayer
+		if plr then cleanParent(plr:FindFirstChildOfClass('PlayerGui')) end
+	end)
 end
 
 
@@ -61,6 +91,12 @@ local mainapi = {
 	}
 }
 
+if shared then
+	shared.vape = mainapi
+elseif getgenv then
+	getgenv().vape = mainapi
+end
+
 local cloneref = cloneref or function(obj) return obj end
 local playersService = cloneref(game:GetService('Players'))
 local tweenService = cloneref(game:GetService('TweenService'))
@@ -81,10 +117,8 @@ local modal
 local cursor
 local logoFrame
 local logoImage
-local logoFallback
 local versionLabel
 local activeList
-local creationList
 local radarWindow
 local radarCanvas
 local tooltip
@@ -364,37 +398,60 @@ function tween:Tween(obj, tweeninfo, goal)
 	end
 end
 
+local entityStub = {
+	Events = {
+		LocalAdded = {Connect = function() return {Disconnect = function() end} end},
+		LocalRemoved = {Connect = function() return {Disconnect = function() end} end},
+		EntityAdded = {Connect = function() return {Disconnect = function() end} end},
+		EntityRemoved = {Connect = function() return {Disconnect = function() end} end}
+	},
+	List = {},
+	EntityPosition = {},
+	isAlive = false,
+	character = nil,
+	Character = nil,
+	RootPart = nil,
+	Humanoid = nil,
+	Update = function() end,
+	Refresh = function() end,
+	Clean = function() end
+}
+
+local targetStub = {
+	Object = nil,
+	Objects = {},
+	Targets = {},
+	Players = {},
+	Update = function() end,
+	Refresh = function() end,
+	Clean = function() end
+}
+
 mainapi.Libraries = {
 	color = color,
 	getcustomasset = getcustomasset,
 	getfontsize = getfontsize,
 	tween = tween,
 	uipallet = uipallet,
-	targetinfo = {
-		Object = nil,
-		Objects = {},
-		Targets = {},
-		Update = function() end,
-		Refresh = function() end,
-		Clean = function() end
-	},
-	entity = {},
-	entitylib = {
-		Events = {
-			LocalAdded = {Connect = function() return {Disconnect = function() end} end},
-			LocalRemoved = {Connect = function() return {Disconnect = function() end} end}
-		},
-		isAlive = false,
-		character = nil,
-		Update = function() end,
-		Refresh = function() end
-	},
+	targetinfo = targetStub,
+	entity = entityStub,
+	entitylib = entityStub,
 	whitelist = {
 		Loaded = true,
 		CheckPlayer = function() return true end,
-		GetTag = function() return nil end
+		GetTag = function() return nil end,
+		GetCustomTags = function() return {} end
 	}
 }
+
+if getgenv then
+	getgenv().entitylib = getgenv().entitylib or entityStub
+	getgenv().targetinfo = getgenv().targetinfo or targetStub
+end
+if shared then
+	shared.entitylib = shared.entitylib or entityStub
+	shared.targetinfo = shared.targetinfo or targetStub
+end
 
 local function stroke(obj, thickness, transparency, col)
 	local s = Instance.new('UIStroke')
@@ -452,6 +509,29 @@ local function moduleKey(categoryName, name)
 	return canonicalCategoryName(categoryName)..':'..tostring(name or ''):gsub('%s+', ''):lower()
 end
 
+local MODULE_CATEGORY_HINTS = {
+	Blocks = {'scaffold', 'bed', 'block', 'chest', 'bridge', 'place', 'break', 'mlg'},
+	Movement = {'speed', 'fly', 'flight', 'jump', 'highjump', 'sprint', 'noclip', 'blink', 'parkour', 'velocity', 'desync'},
+	Combat = {'aim', 'aura', 'hitbox', 'reach', 'trap', 'm2tap', 'kick', 'delay', 'stamina', 'dive', 'physical', 'allhbe', 'autotrap', 'nodelay', 'nokick', 'customkick', 'fakelag'},
+	Render = {'esp', 'visual', 'render', 'tracksuit', 'disguise', 'offsides', 'positions', 'backtrack', 'staff'},
+	Chat = {'chat', 'say', 'translator', 'message', 'spam'},
+	Fun = {'panic', 'troll', 'prop', 'murderer', 'fish', 'rejoin'},
+	Items = {'item', 'tool', 'inventory', 'chest', 'steal', 'autoitem'}
+}
+
+local function categoryFromModuleName(defaultCategory, moduleName)
+	local lower = tostring(moduleName or ''):lower()
+	for categoryName, words in pairs(MODULE_CATEGORY_HINTS) do
+		for _, word in ipairs(words) do
+			if lower:find(word, 1, true) then
+				return categoryName
+			end
+		end
+	end
+	return canonicalCategoryName(defaultCategory)
+end
+
+
 local function safeText(value)
 	if type(value) == 'function' then
 		local ok, res = pcall(value, 0)
@@ -468,15 +548,6 @@ local function safeSuffix(suffix, value)
 	return tostring(suffix or '')
 end
 
-local function logCreatedModule(categoryName, moduleName)
-	if creationList then
-		local count = 0
-		for _, moduleapi in ipairs(mainapi.ModuleList) do
-			count += 1
-		end
-		creationList.Text = 'Created: '..count..' modules\nLast: '..tostring(categoryName)..' / '..tostring(moduleName)
-	end
-end
 
 
 local function bringToFront(windowapi)
@@ -783,6 +854,29 @@ local components = {}
 
 local function createOptionBase(kind, optionsettings, parent, moduleapi)
 	optionsettings = optionsettings or {}
+	if not parent then
+		local optionapi = {
+			Type = kind,
+			Name = optionsettings.Name or kind,
+			Default = optionsettings.Default,
+			Value = optionsettings.Default,
+			Function = optionsettings.Function or function() end,
+			Object = nil
+		}
+		function optionapi:SetValue(val, _, final)
+			self.Value = val
+			safeCall(self.Function, val, final)
+			return self
+		end
+		function optionapi:Reset()
+			return self:SetValue(self.Default, nil, true)
+		end
+		function optionapi:SetVisible() return self end
+		function optionapi:Save(tab) if type(tab) == 'table' then tab[self.Name] = {Value = self.Value} end end
+		function optionapi:Load(tab) if type(tab) == 'table' and tab.Value ~= nil then self:SetValue(tab.Value) end end
+		if moduleapi and moduleapi.Options then table.insert(moduleapi.Options, optionapi) end
+		return optionapi
+	end
 	local optionapi = {
 		Type = kind,
 		Name = optionsettings.Name or kind,
@@ -1342,7 +1436,7 @@ end
 
 local function safeCreateOption(compName, moduleapi, optionsettings)
 	optionsettings = optionsettings or {}
-	local parent = moduleapi.SettingsList or moduleapi.Children
+	local parent = moduleapi.SettingsList or moduleapi.Children or (moduleapi.SettingsWindow and moduleapi.SettingsWindow.Body)
 	local maker = components[compName]
 
 	if maker then
@@ -1472,6 +1566,11 @@ function mainapi:CreateCategory(categorysettings)
 	function categoryapi:CreateModule(modulesettings)
 		modulesettings = modulesettings or {}
 		local name = tostring(modulesettings.Name or ('Module'..tostring(#self.Modules + 1)))
+		local finalCategory = categoryFromModuleName(canonical, name)
+		local ownerCategory = finalCategory ~= canonical and mainapi.Categories[finalCategory] or self
+		if ownerCategory and ownerCategory ~= self then
+			return ownerCategory:CreateModule(modulesettings)
+		end
 		local key = moduleKey(canonical, name)
 		if mainapi.ModuleKeys[key] then
 			local existing = mainapi.Modules[mainapi.ModuleKeys[key]]
@@ -1649,7 +1748,6 @@ function mainapi:CreateCategory(categorysettings)
 		if not mainapi.Modules[name] then mainapi.Modules[name] = moduleapi end
 		mainapi.ModuleKeys[key] = key
 		table.insert(mainapi.ModuleList, moduleapi)
-		logCreatedModule(canonical, name)
 
 		local rows = {}
 		for _, module in pairs(self.Modules) do table.insert(rows, module) end
@@ -1675,6 +1773,7 @@ end
 
 gui = Instance.new('ScreenGui')
 gui.Name = 'WurstClickGui'
+gui:SetAttribute('WurstTheme', true)
 gui.DisplayOrder = 9999999
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.IgnoreGuiInset = true
@@ -1738,8 +1837,6 @@ logoImage.ScaleType = Enum.ScaleType.Fit
 logoImage.Visible = logoImage.Image ~= ''
 logoImage.Parent = logoFrame
 
-logoFallback = makeShadowedText(logoFrame, 'WURST', 24, UDim2.fromOffset(0, -2), Color3.fromRGB(255, 140, 0))
-logoFallback.Visible = false
 
 local versionBack = Instance.new('Frame')
 versionBack.Name = 'VersionBack'
@@ -1754,18 +1851,12 @@ versionLabel = makeShadowedText(logoFrame, 'v7.53.1 MC26.1.2', 11, UDim2.fromOff
 versionLabel.Size = UDim2.fromOffset(180, 18)
 
 activeList = makeText(logoFrame, '', 13, false)
-activeList.Size = UDim2.fromOffset(160, 70)
+activeList.Size = UDim2.fromOffset(170, 90)
 activeList.Position = UDim2.fromOffset(0, 34)
 activeList.TextYAlignment = Enum.TextYAlignment.Top
 activeList.TextXAlignment = Enum.TextXAlignment.Left
 activeList.TextColor3 = Color3.new(1, 1, 1)
 
-creationList = makeText(logoFrame, 'Created: 0 modules', 10, false)
-creationList.Size = UDim2.fromOffset(230, 35)
-creationList.Position = UDim2.fromOffset(0, 104)
-creationList.TextYAlignment = Enum.TextYAlignment.Top
-creationList.TextXAlignment = Enum.TextXAlignment.Left
-creationList.TextColor3 = Color3.fromRGB(235, 235, 235)
 
 tooltip = Instance.new('Frame')
 tooltip.Name = 'Tooltip'
