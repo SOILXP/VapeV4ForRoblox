@@ -63,6 +63,7 @@ local activeList
 local radarWindow
 local radarCanvas
 local tooltip
+local tooltipText
 local scale
 local currentPopup
 local expandedSettings
@@ -403,13 +404,15 @@ local function updateWindowVisibility()
 end
 
 local function setTooltip(text)
-	if not tooltip then return end
+	if not tooltip or not tooltipText then return end
 	if not text or text == '' then
 		tooltip.Visible = false
 		return
 	end
-	tooltip.Text.Text = tostring(text)
-	tooltip.Size = UDim2.fromOffset(math.min(getfontsize(tooltip.Text.Text, 11, uipallet.Font).X + 10, 320), getfontsize(tooltip.Text.Text, 11, uipallet.Font).Y + 8)
+
+	tooltipText.Text = tostring(text)
+	local bounds = getfontsize(tooltipText.Text, 11, uipallet.Font)
+	tooltip.Size = UDim2.fromOffset(math.min(bounds.X + 10, 320), bounds.Y + 8)
 	tooltip.BackgroundTransparency = 1 - math.clamp(mainapi.Settings.TooltipOpacity or 0.75, 0, 1)
 	tooltip.Visible = true
 end
@@ -1336,11 +1339,12 @@ tooltip.Visible = false
 tooltip.ZIndex = 100000
 tooltip.Parent = scaledgui
 stroke(tooltip, 1, 0.1)
-tooltip.Text = makeText(tooltip, '', 11, false)
-tooltip.Text.Size = UDim2.new(1, -8, 1, -6)
-tooltip.Text.Position = UDim2.fromOffset(4, 3)
-tooltip.Text.TextWrapped = true
-tooltip.Text.ZIndex = 100001
+tooltipText = makeText(tooltip, '', 11, false)
+tooltipText.Name = 'Text'
+tooltipText.Size = UDim2.new(1, -8, 1, -6)
+tooltipText.Position = UDim2.fromOffset(4, 3)
+tooltipText.TextWrapped = true
+tooltipText.ZIndex = 100001
 
 for _, cat in ipairs(WURST_ORDER) do
 	local category = mainapi:CreateCategory({Name = cat})
