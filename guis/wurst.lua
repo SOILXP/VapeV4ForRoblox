@@ -1,4 +1,4 @@
-
+-- Wurst duplicate-load guard
 do
 	local sharedTable = shared or (getgenv and getgenv()) or nil
 	local old = sharedTable and rawget(sharedTable, 'vape') or nil
@@ -60,6 +60,10 @@ local mainapi = {
 	Keybind = Enum.KeyCode.RightShift,
 	Loaded = false,
 	Uninjecting = false,
+	['GUI bind indicator'] = {Enabled = false, Object = nil},
+	['GUI bind indicator text'] = {Enabled = false, Object = nil},
+	['GUI bind indicator background'] = {Enabled = false, Object = nil},
+	['ClickGui'] = nil,
 	Libraries = {},
 	ModuleKeys = {},
 	ModuleList = {},
@@ -600,8 +604,15 @@ local function updateWindowVisibility()
 	for _, windowapi in pairs(mainapi.Windows) do
 		windowapi.Frame.Visible = windowShouldShow(windowapi)
 	end
+
 	if logoFrame then
-		logoFrame.Visible = (clickgui and clickgui.Visible and mainapi.Settings.WurstLogo ~= false) or (mainapi.Settings.HackList ~= false and activeList and activeList.Text ~= '')
+		local showLogo = mainapi.Settings.WurstLogo ~= false
+		local showHackList = mainapi.Settings.HackList ~= false
+		logoFrame.Visible = showLogo or showHackList
+
+		if logoImage then logoImage.Visible = showLogo and logoImage.Image ~= '' end
+		if versionLabel then versionLabel.Visible = showLogo end
+		if activeList then activeList.Visible = showHackList end
 	end
 end
 
@@ -1274,6 +1285,27 @@ mainapi.Components = setmetatable(components, {
 	end
 })
 
+setmetatable(mainapi, {
+	__index = function(tab, ind)
+		if type(ind) == 'string' then
+			if ind:find('GUI', 1, true) or ind:find('bind', 1, true) or ind:find('Indicator', 1, true) or ind:find('indicator', 1, true) then
+				local stub = {
+					Enabled = false,
+					Object = nil,
+					SetValue = function(self, val) self.Enabled = val == true return self end,
+					Toggle = function(self) self.Enabled = not self.Enabled return self end,
+					Clean = function() end,
+					Save = function() end,
+					Load = function() end
+				}
+				rawset(tab, ind, stub)
+				return stub
+			end
+		end
+		return nil
+	end
+})
+
 function mainapi:Clean(obj)
 	if typeof(obj) == 'Instance' then
 		table.insert(self.Connections, {Disconnect = function()
@@ -1800,6 +1832,9 @@ clickgui.Text = ''
 clickgui.Visible = false
 clickgui.Parent = scaledgui
 
+mainapi.ClickGui = clickgui
+mainapi['ClickGui'] = clickgui
+
 scale = Instance.new('UIScale')
 scale.Scale = 1
 scale.Parent = scaledgui
@@ -1856,6 +1891,10 @@ activeList.Position = UDim2.fromOffset(0, 34)
 activeList.TextYAlignment = Enum.TextYAlignment.Top
 activeList.TextXAlignment = Enum.TextXAlignment.Left
 activeList.TextColor3 = Color3.new(1, 1, 1)
+
+mainapi['GUI bind indicator'].Object = activeList
+mainapi['GUI bind indicator text'].Object = activeList
+mainapi['GUI bind indicator background'].Object = logoFrame
 
 
 tooltip = Instance.new('Frame')
