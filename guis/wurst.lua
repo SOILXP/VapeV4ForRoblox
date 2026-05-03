@@ -1775,6 +1775,9 @@ function mainapi:CreateCategory(categorysettings)
 		end)
 		if moduleapi.Tooltip then connectTooltip(row, moduleapi.Tooltip) end
 
+		moduleapi.Object = row
+		ensureModuleApi(moduleapi)
+
 		self.Modules[name] = moduleapi
 		mainapi.Modules[key] = moduleapi
 		if not mainapi.Modules[name] then mainapi.Modules[name] = moduleapi end
@@ -1782,14 +1785,20 @@ function mainapi:CreateCategory(categorysettings)
 		table.insert(mainapi.ModuleList, moduleapi)
 
 		local rows = {}
-		for _, module in pairs(self.Modules) do table.insert(rows, module) end
-		table.sort(rows, function(a, b) return a.Name:lower() < b.Name:lower() end)
+		for _, module in pairs(self.Modules) do
+			if type(module) == 'table' and type(module.Name) == 'string' and typeof(module.Object) == 'Instance' then
+				table.insert(rows, module)
+			end
+		end
+		table.sort(rows, function(a, b)
+			return tostring(a.Name):lower() < tostring(b.Name):lower()
+		end)
 		for i, module in ipairs(rows) do
-			module.Object.LayoutOrder = i
+			if module.Object and module.Object.Parent then
+				module.Object.LayoutOrder = i
+			end
 		end
 
-		moduleapi.Object = row
-		ensureModuleApi(moduleapi)
 		window:Apply()
 		return moduleapi
 	end
@@ -2096,6 +2105,12 @@ task.defer(function()
 	updateWindowVisibility()
 	mainapi:UpdateTextGUI()
 end)
+
+mainapi['GUI bind indicator'] = mainapi['GUI bind indicator'] or {Enabled = false, Object = activeList}
+mainapi['GUI bind indicator text'] = mainapi['GUI bind indicator text'] or {Enabled = false, Object = activeList}
+mainapi['GUI bind indicator background'] = mainapi['GUI bind indicator background'] or {Enabled = false, Object = logoFrame}
+mainapi.ClickGui = mainapi.ClickGui or clickgui
+mainapi['ClickGui'] = mainapi['ClickGui'] or clickgui
 
 mainapi.Loaded = true
 if shared then
