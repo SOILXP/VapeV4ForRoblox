@@ -78,10 +78,22 @@ local function downloadFile(path, func)
 	return (func or readfile)(path)
 end
 
-getcustomasset = not inputService.TouchEnabled and getcustomasset and function(path)
-	return downloadFile(path, getcustomasset)
-end or function(path)
-	return getcustomassets[path] or ''
+local realGetCustomAsset = getcustomasset
+getcustomasset = function(path)
+	if getcustomassets[path] then
+		return getcustomassets[path]
+	end
+
+	if not inputService.TouchEnabled and realGetCustomAsset then
+		local suc, res = pcall(function()
+			return downloadFile(path, realGetCustomAsset)
+		end)
+		if suc and res then
+			return res
+		end
+	end
+
+	return ''
 end
 
 local function getTableSize(tab)
@@ -323,12 +335,15 @@ function mainapi:CreateCategory(categorysettings)
 		line.BackgroundTransparency = 0.39
 		line.BorderSizePixel = 0
 		line.Parent = modulebutton
-		local triangle = Instance.new('ImageButton')
+		local triangle = Instance.new('TextButton')
 		triangle.Size = UDim2.fromOffset(28, 16)
-		triangle.Position = UDim2.new(1, -38, 0, 16)
+		triangle.Position = UDim2.new(1, -38, 0, 14)
 		triangle.BackgroundTransparency = 1
-		triangle.Image = getcustomasset('newvape/assets/wurst/triangle.png')
 		triangle.AutoButtonColor = false
+		triangle.Text = '▶'
+		triangle.TextSize = 20
+		triangle.TextColor3 = uipallet.Text
+		triangle.FontFace = uipallet.FontSemiBold
 		triangle.Parent = modulebutton
 		local modulechildren = Instance.new('ScrollingFrame')
 		modulechildren.Name = modulesettings.Name..'Children'
@@ -533,15 +548,6 @@ for _, v in {'Combat', 'Blatant', 'Render', 'Utility', 'World', 'Inventory', 'Mi
 	mainapi:CreateCategory({Name = v})
 end
 
-for i = 1, 60 do
-	local mod = mainapi.Categories.Combat:CreateModule({
-		Name = 'mod'..i,
-		Function = function(callback)
-			print('mod'..i, callback)
-		end,
-		Tooltip = 'testing!'
-	})
-end
 
 mainapi:Clean(clickgui.MouseButton1Click:Connect(function()
 	if expanded then expanded:Expand() end
