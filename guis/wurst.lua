@@ -1,3 +1,26 @@
+-- Wurst duplicate-load guard
+do
+	local sharedTable = shared or (getgenv and getgenv()) or nil
+	local old = sharedTable and rawget(sharedTable, 'vape') or nil
+
+	if type(old) == 'table' then
+		if type(old.Uninject) == 'function' then
+			pcall(function()
+				old:Uninject(true)
+			end)
+		elseif old.gui then
+			pcall(function()
+				old.gui:ClearAllChildren()
+				old.gui:Destroy()
+			end)
+		end
+
+		pcall(function()
+			sharedTable.vape = nil
+		end)
+	end
+end
+
 
 local mainapi = {
 	Connections = {},
@@ -6,6 +29,7 @@ local mainapi = {
 	GUIColor = {Hue = 0.46, Sat = 0.96, Value = 0.52},
 	Keybind = Enum.KeyCode.RightShift,
 	Loaded = false,
+	Uninjecting = false,
 	Libraries = {},
 	ModuleKeys = {},
 	ModuleList = {},
@@ -345,7 +369,31 @@ mainapi.Libraries = {
 	getcustomasset = getcustomasset,
 	getfontsize = getfontsize,
 	tween = tween,
-	uipallet = uipallet
+	uipallet = uipallet,
+	targetinfo = {
+		Object = nil,
+		Objects = {},
+		Targets = {},
+		Update = function() end,
+		Refresh = function() end,
+		Clean = function() end
+	},
+	entity = {},
+	entitylib = {
+		Events = {
+			LocalAdded = {Connect = function() return {Disconnect = function() end} end},
+			LocalRemoved = {Connect = function() return {Disconnect = function() end} end}
+		},
+		isAlive = false,
+		character = nil,
+		Update = function() end,
+		Refresh = function() end
+	},
+	whitelist = {
+		Loaded = true,
+		CheckPlayer = function() return true end,
+		GetTag = function() return nil end
+	}
 }
 
 local function stroke(obj, thickness, transparency, col)
@@ -1164,6 +1212,24 @@ function mainapi:UpdateTextGUI()
 end
 
 function mainapi:UpdateGUI() end
+function mainapi:UpdateTextGUI()
+	if activeList then
+		local enabled = {}
+		for _, moduleapi in ipairs(self.ModuleList or {}) do
+			if moduleapi.Enabled then table.insert(enabled, moduleapi.Name) end
+		end
+		table.sort(enabled)
+		activeList.Text = table.concat(enabled, '\n')
+	end
+	if updateWindowVisibility then updateWindowVisibility() end
+end
+function mainapi:Update()
+	self:UpdateGUI()
+	self:UpdateTextGUI()
+end
+function mainapi:Refresh()
+	self:Update()
+end
 function mainapi:Load()
 	self.Loaded = true
 end
@@ -1172,6 +1238,210 @@ function mainapi:Save()
 end
 function mainapi:CreateNotification(_, text)
 	warn('[Wurst UI Notification]', text or '')
+end
+function mainapi:Uninject(silent)
+	if self.Uninjecting then return end
+	self.Uninjecting = true
+
+	pcall(function()
+		self:Save()
+	end)
+
+	for _, moduleapi in ipairs(self.ModuleList or {}) do
+		pcall(function()
+			if moduleapi.Enabled and moduleapi.Toggle then
+				moduleapi:Toggle(true)
+			end
+		end)
+
+		if moduleapi.Connections then
+			for _, connection in ipairs(moduleapi.Connections) do
+				pcall(function()
+					if typeof(connection) == 'RBXScriptConnection' then
+						connection:Disconnect()
+					elseif type(connection) == 'function' then
+						connection()
+					elseif type(connection) == 'table' and connection.Disconnect then
+						connection:Disconnect()
+					end
+				end)
+			end
+			table.clear(moduleapi.Connections)
+		end
+	end
+
+	for _, connection in ipairs(self.Connections or {}) do
+		pcall(function()
+			if typeof(connection) == 'RBXScriptConnection' then
+				connection:Disconnect()
+			elseif type(connection) == 'function' then
+				connection()
+			elseif type(connection) == 'table' and connection.Disconnect then
+				connection:Disconnect()
+			end
+		end)
+	end
+	table.clear(self.Connections)
+
+	pcall(function()
+		if self.gui then
+			self.gui:ClearAllChildren()
+			self.gui:Destroy()
+		end
+	end)
+
+	pcall(function()
+		if shared and rawget(shared, 'vape') == self then
+			shared.vape = nil
+		end
+	end)
+
+	self.Loaded = nil
+	if not silent then
+		warn('[Wurst UI] Uninjected')
+	end
+end
+
+local function ensureOptionApi(optionapi)
+	if type(optionapi) ~= 'table' then return optionapi end
+	optionapi.Name = optionapi.Name or optionapi.Type or 'Option'
+	optionapi.Type = optionapi.Type or 'Unknown'
+	optionapi.Default = optionapi.Default == nil and optionapi.Value or optionapi.Default
+
+	optionapi.SetValue = optionapi.SetValue or function(self, val)
+		self.Value = val
+		return self
+	end
+	optionapi.Update = optionapi.Update or function(self, val)
+		if val ~= nil then
+			self:SetValue(val)
+		end
+		return self
+	end
+	optionapi.Reset = optionapi.Reset or function(self)
+		self:SetValue(self.Default)
+		return self
+	end
+	optionapi.SetVisible = optionapi.SetVisible or function(self, state)
+		if self.Object then self.Object.Visible = state == true end
+		return self
+	end
+	optionapi.Save = optionapi.Save or function(self, tab)
+		if type(tab) == 'table' then
+			tab[self.Name] = {Value = self.Value}
+		end
+	end
+	optionapi.Load = optionapi.Load or function(self, tab)
+		if type(tab) == 'table' and tab.Value ~= nil then
+			self:SetValue(tab.Value)
+		end
+	end
+
+	return optionapi
+end
+
+local function safeCreateOption(compName, moduleapi, optionsettings)
+	optionsettings = optionsettings or {}
+	local parent = moduleapi.SettingsList or moduleapi.Children
+	local maker = components[compName]
+
+	if maker then
+		local ok, res = pcall(maker, optionsettings, parent, moduleapi)
+		if ok and type(res) == 'table' then
+			return ensureOptionApi(res)
+		end
+		warn('[Wurst UI] option failed for '..tostring(moduleapi.Name)..' / '..tostring(compName)..': '..tostring(res))
+	end
+
+	return ensureOptionApi(createOptionBase(compName, optionsettings, parent, moduleapi))
+end
+
+local function ensureModuleApi(moduleapi)
+	if type(moduleapi) ~= 'table' then return moduleapi end
+
+	moduleapi.Options = moduleapi.Options or {}
+	moduleapi.Connections = moduleapi.Connections or {}
+	moduleapi.Bind = moduleapi.Bind or ''
+	moduleapi.Enabled = moduleapi.Enabled == true
+	moduleapi.Tooltip = moduleapi.Tooltip or moduleapi.HoverText or moduleapi.Description
+
+	moduleapi.Clean = moduleapi.Clean or function(self, obj)
+		if typeof(obj) == 'Instance' then
+			table.insert(self.Connections, {Disconnect = function()
+				if obj then pcall(function() obj:ClearAllChildren(); obj:Destroy() end) end
+			end})
+		elseif typeof(obj) == 'RBXScriptConnection' then
+			table.insert(self.Connections, obj)
+		elseif type(obj) == 'thread' then
+			table.insert(self.Connections, {Disconnect = function() pcall(task.cancel, obj) end})
+		elseif type(obj) == 'function' then
+			table.insert(self.Connections, {Disconnect = obj})
+		elseif type(obj) == 'table' and obj.Disconnect then
+			table.insert(self.Connections, obj)
+		end
+	end
+
+	moduleapi.SetBind = moduleapi.SetBind or function(self, val)
+		if type(val) == 'table' then
+			self.Bind = val[1] or ''
+		else
+			self.Bind = val or ''
+		end
+		return self
+	end
+
+	moduleapi.SetVisible = moduleapi.SetVisible or function(self, state)
+		if self.Object then self.Object.Visible = state == true end
+		return self
+	end
+
+	moduleapi.SetExtraText = moduleapi.SetExtraText or function(self, txt)
+		self.ExtraText = txt
+		return self
+	end
+
+	moduleapi.Update = moduleapi.Update or function(self)
+		if mainapi and mainapi.UpdateTextGUI then
+			mainapi:UpdateTextGUI()
+		end
+		return self
+	end
+
+	for compName in pairs(components) do
+		local method = 'Create'..compName
+		if moduleapi[method] == nil then
+			moduleapi[method] = function(self, optionsettings)
+				return safeCreateOption(compName, self, optionsettings)
+			end
+		end
+	end
+
+	local aliasMap = {
+		CreateTextBox = 'Textbox',
+		CreateTextbox = 'Textbox',
+		CreateTextField = 'Textbox',
+		CreateInput = 'Textbox',
+		CreateSlider = 'Slider',
+		CreateToggle = 'Toggle',
+		CreateDropdown = 'Dropdown',
+		CreateColorSlider = 'ColorSlider',
+		CreateColor = 'ColorSlider',
+		CreateButton = 'Button',
+		CreateKeybind = 'Keybind',
+		CreateBind = 'Keybind',
+		CreateMultiDropdown = 'Dropdown',
+		CreateRangeSlider = 'Slider',
+		CreateTextList = 'Textbox',
+		CreateList = 'Textbox'
+	}
+
+	for method, compName in pairs(aliasMap) do
+		moduleapi[method] = moduleapi[method] or function(self, optionsettings)
+			return safeCreateOption(compName, self, optionsettings)
+		end
+	end
+
+	return moduleapi
 end
 
 function mainapi:CreateCategory(categorysettings)
@@ -1207,8 +1477,8 @@ function mainapi:CreateCategory(categorysettings)
 			local existing = mainapi.Modules[mainapi.ModuleKeys[key]]
 			if existing and existing.Object and existing.Object.Parent then
 				existing.Function = modulesettings.Function or existing.Function
-				existing.Tooltip = modulesettings.Tooltip or existing.Tooltip
-				return existing
+				existing.Tooltip = modulesettings.Tooltip or modulesettings.HoverText or modulesettings.Description or existing.Tooltip
+				return ensureModuleApi(existing)
 			end
 			mainapi.ModuleKeys[key] = nil
 		end
@@ -1355,14 +1625,8 @@ function mainapi:CreateCategory(categorysettings)
 			__index = function(_, ind)
 				local comp = tostring(ind):match('^Create(.+)$')
 				if comp then
-					return function(_, optionsettings)
-						local maker = components[comp]
-						if maker then
-							local ok, res = pcall(maker, optionsettings or {}, moduleapi.SettingsList, moduleapi)
-							if ok then return res end
-							warn('[Wurst UI] option failed for '..name..' / '..comp..': '..tostring(res))
-						end
-						return createOptionBase(comp, optionsettings or {}, moduleapi.SettingsList, moduleapi)
+					return function(self, optionsettings)
+						return safeCreateOption(comp, self or moduleapi, optionsettings)
 					end
 				end
 				return function() return moduleapi end
@@ -1395,6 +1659,7 @@ function mainapi:CreateCategory(categorysettings)
 		end
 
 		moduleapi.Object = row
+		ensureModuleApi(moduleapi)
 		window:Apply()
 		return moduleapi
 	end
@@ -1409,7 +1674,7 @@ function mainapi:CreateCategory(categorysettings)
 end
 
 gui = Instance.new('ScreenGui')
-gui.Name = randomString()
+gui.Name = 'WurstClickGui'
 gui.DisplayOrder = 9999999
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.IgnoreGuiInset = true
@@ -1701,5 +1966,12 @@ task.defer(function()
 	updateWindowVisibility()
 	mainapi:UpdateTextGUI()
 end)
+
+mainapi.Loaded = true
+if shared then
+	shared.vape = mainapi
+elseif getgenv then
+	getgenv().vape = mainapi
+end
 
 return mainapi
